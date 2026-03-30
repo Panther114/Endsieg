@@ -81,6 +81,17 @@ CMD ["node", "server/index.js"]
 
 ---
 
+## PNG Assets
+
+The following image files can be placed in the `client/` directory to enhance the visual experience. They are optional — the UI gracefully falls back if they are missing.
+
+| File | Purpose | Recommended Specs |
+|------|---------|-------------------|
+| `client/bg.png` | Background image shown in the **board center** (the area surrounded by tiles). Used as `background-image` in `.board-center-actions` inside `board.css`. Should be a dark, dramatic WWII-themed image (e.g., a tactical map, battle scene, or aerial photograph). | At least **600 × 300 px**; dark tones work best. If missing, the board center falls back to the dark radial-gradient background colour. |
+| `client/logo.png` | *(Optional)* Logo shown in the lobby header / loading screen. If missing, the plain text title "ENDSIEG" is displayed instead. | Transparent PNG, roughly **300 × 80 px**. |
+
+---
+
 ## File Structure
 
 ```

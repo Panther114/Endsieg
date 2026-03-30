@@ -16,6 +16,19 @@ const COLOR_MAP = {
   red:'#F44336', yellow:'#FFC107', green:'#4CAF50', darkblue:'#1a237e'
 };
 
+// ── FORMAT TILE NAME ───────────────────────────────────────────────
+// Splits words longer than 5 chars into ≤5-char chunks for compact display
+function formatTileName(name) {
+  return name.split(' ').map(word => {
+    if (word.length <= 5) return word;
+    const chunks = [];
+    for (let i = 0; i < word.length; i += 5) {
+      chunks.push(word.slice(i, i + 5));
+    }
+    return chunks.join(' ');
+  }).join(' ');
+}
+
 // ── LOADING TIMEOUT ────────────────────────────────────────────────
 const loadingTimeout = setTimeout(() => {
   const ls = document.getElementById('loadingScreen');
@@ -134,11 +147,19 @@ function renderBoard(state) {
     el.style.gridRow    = row;
     el.style.gridColumn = col;
 
-    // Color band (with house/hotel icons)
+    // Color band (with house/hotel icons and price)
     const houseOwner = state.players.find(p => p.id === (state.propertyOwners && state.propertyOwners[tile.id]));
     if (tile.color) {
       const band = document.createElement('div');
       band.className = `color-band band-${tile.color}`;
+
+      // Price inside band for maximum readability
+      if (tile.price) {
+        const priceInBand = document.createElement('div');
+        priceInBand.className = 'tile-price-band';
+        priceInBand.textContent = `$${tile.price}`;
+        band.appendChild(priceInBand);
+      }
 
       // Add house/hotel icons to the band
       const houseCount = (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) || 0;
@@ -182,10 +203,11 @@ function renderBoard(state) {
     } else {
       const name = document.createElement('div');
       name.className = 'tile-name';
-      name.textContent = tile.name;
+      name.textContent = formatTileName(tile.name);
       el.appendChild(name);
 
-      if (tile.price) {
+      // Only show price outside band for non-property tiles (tax cost, etc.)
+      if (!tile.color && tile.price) {
         const price = document.createElement('div');
         price.className = 'tile-price';
         price.textContent = `$${tile.price}`;
@@ -254,6 +276,12 @@ function updateBoardCenter(state, centerEl) {
   const myPlayer = state.players.find(p => p.id === myId);
   const phase = state.turnPhase;
   const currPlayer = state.players.find(p => p.id === state.currentPlayerId);
+
+  // Turn indicator bar (thin colored stripe at top)
+  const turnBar = document.createElement('div');
+  turnBar.className = 'turn-indicator-bar';
+  turnBar.style.background = currPlayer ? currPlayer.color : 'transparent';
+  el.appendChild(turnBar);
 
   // Title
   const title = document.createElement('div');
@@ -459,6 +487,8 @@ function renderPlayers(state) {
   const container = document.getElementById('playerCards');
   container.innerHTML = '';
 
+  if (!window._prevMoney) window._prevMoney = {};
+
   state.players.forEach(p => {
     const card = document.createElement('div');
     card.className = `player-card${p.id === state.currentPlayerId ? ' active' : ''}${p.bankrupt ? ' bankrupt' : ''}`;
@@ -478,9 +508,19 @@ function renderPlayers(state) {
     header.appendChild(token);
     header.appendChild(name);
 
+    const prevMoney = window._prevMoney[p.id] !== undefined ? window._prevMoney[p.id] : p.money;
+    window._prevMoney[p.id] = p.money;
+
     const money = document.createElement('div');
     money.className = 'player-money';
     money.textContent = `$${p.money.toLocaleString()}`;
+    if (p.money > prevMoney) {
+      money.classList.add('money-increase');
+      money.addEventListener('animationend', () => money.classList.remove('money-increase'), { once: true });
+    } else if (p.money < prevMoney) {
+      money.classList.add('money-decrease');
+      money.addEventListener('animationend', () => money.classList.remove('money-decrease'), { once: true });
+    }
 
     const props = document.createElement('div');
     props.className = 'player-props';
