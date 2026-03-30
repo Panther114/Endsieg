@@ -35,17 +35,18 @@ const loadingTimeout = setTimeout(() => {
 // ── DICE FACES removed — using numeric display ──────────────────────
 
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
-// Maps tile id -> [gridRow, gridCol] (1-indexed, 16x16 grid)
+// Maps tile id -> [gridRow, gridCol] (1-indexed, 20x10 grid)
 function buildPositionMap() {
   const pos = {};
-  // Bottom row (row 16): tiles 0-15, right to left
-  for (let i = 0; i <= 15; i++) pos[i] = [16, 16 - i];
-  // Left col (col 1): tiles 16-28, bottom to top (excluding corners)
-  for (let i = 16; i <= 28; i++) pos[i] = [15 - (i - 16), 1];
-  // Top row (row 1): tiles 29-44, left to right
-  for (let i = 29; i <= 44; i++) pos[i] = [1, i - 28];
-  // Right col (col 16): tiles 45-55, top to bottom (excluding bottom-right corner which is tile 0)
-  for (let i = 45; i <= 55; i++) pos[i] = [i - 43, 16];
+  const COLS = 20, ROWS = 10;
+  // Bottom row (row ROWS): tile 0 at col COLS, going right→left
+  for (let i = 0; i <= 19; i++) pos[i] = [ROWS, COLS - i];           // ids 0-19
+  // Left col (col 1): rows ROWS-1 → 2 (8 tiles), ids 20-27
+  for (let i = 0; i < 8; i++) pos[20 + i] = [ROWS - 1 - i, 1];      // ids 20-27
+  // Top row (row 1): col 1→COLS, ids 28-47
+  for (let i = 0; i <= 19; i++) pos[28 + i] = [1, i + 1];            // ids 28-47
+  // Right col (col COLS): rows 2→ROWS-1, ids 48-55
+  for (let i = 0; i < 8; i++) pos[48 + i] = [2 + i, COLS];          // ids 48-55
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -237,8 +238,8 @@ function renderBoard(state) {
   const center = document.createElement('div');
   center.className = 'board-center-actions';
   center.id = 'boardCenterActions';
-  center.style.gridRow    = '2 / 16';
-  center.style.gridColumn = '2 / 16';
+  center.style.gridRow    = '2 / 10';
+  center.style.gridColumn = '2 / 20';
   updateBoardCenter(state, center);
   boardEl.appendChild(center);
 }
@@ -335,18 +336,21 @@ function makeCenterBtn(label, type, fn) {
   return btn;
 }
 
+const BOARD_ROWS = 10;
+const BOARD_COLS = 20;
+
 function buildTileClass(tile, row, col) {
   let cls = `tile tile-${tile.type}`;
-  if (isCorner(row, col)) cls += ' tile-corner';
-  else if (row === 16) cls += ' tile-bottom';
-  else if (row === 1)  cls += ' tile-top';
-  else if (col === 1)  cls += ' tile-left';
-  else if (col === 16) cls += ' tile-right';
+  if (isCorner(row, col))       cls += ' tile-corner';
+  else if (row === BOARD_ROWS)  cls += ' tile-bottom';
+  else if (row === 1)           cls += ' tile-top';
+  else if (col === 1)           cls += ' tile-left';
+  else if (col === BOARD_COLS)  cls += ' tile-right';
   return cls;
 }
 
 function isCorner(row, col) {
-  return (row === 1 || row === 16) && (col === 1 || col === 16);
+  return (row === 1 || row === BOARD_ROWS) && (col === 1 || col === BOARD_COLS);
 }
 
 function buildCornerContent(tile) {

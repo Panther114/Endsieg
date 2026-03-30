@@ -2,19 +2,19 @@
    board.css — Board grid, tiles, tokens, houses for Endsieg
    ===================================================================== */
 
-/* ── BOARD SIZE VARIABLE ── */
+/* ── BOARD LAYOUT VARIABLES ── */
 :root {
-  --corner-size: 9%;
-  --board-size: max(500px, min(calc(100vh - 24px), calc(100vw - 500px - 16px)));
+  --corner-w: 9%;   /* corner tile width as % of board width  */
+  --corner-h: 18%;  /* corner tile height as % of board height */
 }
 
-/* ── BOARD CONTAINER ── */
+/* ── BOARD CONTAINER (20 cols × 10 rows, fills wrapper) ── */
 .board {
   display: grid;
-  grid-template-columns: var(--corner-size) repeat(14, 1fr) var(--corner-size);
-  grid-template-rows: var(--corner-size) repeat(14, 1fr) var(--corner-size);
-  width:  var(--board-size);
-  height: var(--board-size);
+  grid-template-columns: var(--corner-w) repeat(18, 1fr) var(--corner-w);
+  grid-template-rows: var(--corner-h) repeat(8, 1fr) var(--corner-h);
+  width: 100%;
+  height: 100%;
   border: 3px solid #555;
   border-radius: 4px;
   background-image: url('../bg.png');
@@ -23,18 +23,6 @@
   background-color: #d4edda;
   position: relative;
   box-shadow: 0 0 40px rgba(0,0,0,0.7);
-  flex-shrink: 0;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  :root {
-    --board-size: min(100vw, calc(100vh - 320px));
-  }
-  .board {
-    width: var(--board-size);
-    height: var(--board-size);
-  }
 }
 
 /* ── BASE TILE ── */
@@ -71,23 +59,19 @@
 /* Top tiles (row 1): band at bottom */
 .tile-top    .color-band { top: auto; bottom: 0; left: 0; right: 0; height: 22%; width: auto; }
 
-/* Left column tiles: band on the RIGHT side */
+/* Left column tiles: band on the RIGHT side (facing board interior) */
 .tile-left   .color-band {
   position: absolute;
-  right: 0;
-  left: auto;
-  top: 0;
-  width: 4px;
+  top: 0; bottom: 0; right: 0; left: auto;
+  width: 22%;
   height: 100%;
 }
 
-/* Right column tiles: band on the LEFT side */
+/* Right column tiles: band on the LEFT side (facing board interior) */
 .tile-right  .color-band {
   position: absolute;
-  left: 0;
-  right: auto;
-  top: 0;
-  width: 4px;
+  top: 0; bottom: 0; left: 0; right: auto;
+  width: 22%;
   height: 100%;
 }
 
@@ -210,8 +194,8 @@
 
 /* ── BOARD CENTER ACTIONS ── */
 .board-center-actions {
-  grid-column: 2 / 16;
-  grid-row: 2 / 16;
+  grid-column: 2 / 20;
+  grid-row: 2 / 10;
   background-image: url('../bg.png');
   background-size: cover;
   background-position: center;
