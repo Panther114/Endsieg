@@ -128,7 +128,7 @@ function joinRoom() {
   const name = document.getElementById('playerName').value.trim();
   const code = document.getElementById('roomCode').value.trim().toUpperCase();
   if (!name) return showError('Please enter your name.');
-  if (!code || code.length !== 6) return showError('Please enter a valid 6-character room code.');
+  if (!code || code.length !== 4) return showError('Please enter a valid 4-digit room code.');
   myPlayerName = name;
   sessionStorage.setItem('endsieg_playerName', name);
   socket.emit('join_room', { roomId: code, playerName: name, color: selectedColor });
@@ -136,7 +136,9 @@ function joinRoom() {
 
 function startGame() {
   if (!myRoomId) return;
-  socket.emit('start_game', { roomId: myRoomId });
+  const fundsEl = document.getElementById('startingFunds');
+  const startingFunds = fundsEl ? parseInt(fundsEl.value) || 1500 : 1500;
+  socket.emit('start_game', { roomId: myRoomId, startingFunds });
 }
 
 // Expose to HTML onclick

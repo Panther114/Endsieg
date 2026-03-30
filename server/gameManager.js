@@ -11,8 +11,22 @@ const disconnectTimers = new Map();
 
 const RECONNECT_GRACE_MS = 12000; // 12s grace for page-navigation disconnects
 
+const ROOM_CODE_PARTS = ['13', '69', '67', '78', '91'];
+
+function generateRoomCode() {
+  const codes = [];
+  for (const a of ROOM_CODE_PARTS) {
+    for (const b of ROOM_CODE_PARTS) {
+      codes.push(a + b);
+    }
+  }
+  const available = codes.filter(c => !rooms.has(c));
+  if (!available.length) return codes[Math.floor(Math.random() * codes.length)];
+  return available[Math.floor(Math.random() * available.length)];
+}
+
 function createRoom(hostId, hostName, hostColor) {
-  const id = uuidv4().replace(/-/g, '').slice(0, 6).toUpperCase();
+  const id = generateRoomCode();
   const room = new GameRoom(id, hostId, hostName, hostColor);
   rooms.set(id, room);
   socketRooms.set(hostId, id);

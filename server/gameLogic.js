@@ -83,12 +83,15 @@ class GameRoom {
     return true;
   }
 
-  start() {
+  start(funds) {
     this.started = true;
     this.currentPlayerIndex = 0;
     this.turnPhase = 'roll';
     this.chanceCards = shuffle(CHANCE_CARDS);
     this.chestCards = shuffle(CHEST_CARDS);
+    if (typeof funds === 'number' && funds >= 500 && funds <= 10000) {
+      for (const p of this.players) p.money = funds;
+    }
     this._addLog('Game started! ' + this.players.map(p => p.name).join(', ') + ' are playing.');
   }
 
@@ -299,12 +302,21 @@ class GameRoom {
     const ownerId = this.propertyOwners[tile.id];
     const ownerPlayer = this.players.find(p => p.id === ownerId);
     const houses = ownerPlayer && ownerPlayer.houses ? (ownerPlayer.houses[tile.id] || 0) : 0;
-    // Double rent if owner has full color group and no houses
-    const hasMonopoly = this._hasMonopoly(ownerId, tile.group);
-    if (houses === 0 && hasMonopoly) {
-      return (tile.rent[0] || 0) * 2;
+    // rent[0]=base, rent[1..4]=1-4 houses, rent[5]=hotel
+    if (houses === 0) {
+      // Double base rent if owner has full color group and no houses
+      if (this._ownsFullGroup(ownerId, tile.group)) {
+        return (tile.rent[0] || 0) * 2;
+      }
+      return tile.rent[0] || 0;
     }
     return tile.rent[Math.min(houses, tile.rent.length - 1)] || tile.rent[0];
+  }
+
+  _ownsFullGroup(ownerId, group) {
+    if (group === undefined || group === null) return false;
+    const groupTiles = BOARD.filter(t => t.group === group && t.type === 'property');
+    return groupTiles.length > 0 && groupTiles.every(t => this.propertyOwners[t.id] === ownerId);
   }
 
   _countOwnedInGroup(ownerId, type) {
@@ -344,7 +356,7 @@ class GameRoom {
     const tile = BOARD[tileId];
     if (!tile || tile.type !== 'property') return this.getState();
     if (this.propertyOwners[tile.id] !== playerId) return this.getState();
-    if (!this._hasMonopoly(playerId, tile.group)) {
+    if (!this._ownsFullGroup(playerId, tile.group)) {
       this._addLog(`${player.name} needs to own the full color group to build.`);
       return this.getState();
     }
@@ -352,6 +364,13 @@ class GameRoom {
     const current = player.houses[tileId] || 0;
     if (current >= 5) {
       this._addLog(`${tile.name} already has a hotel.`);
+      return this.getState();
+    }
+    // Enforce even building: can't build on this tile if another tile in the group has fewer houses
+    const groupTiles = BOARD.filter(t => t.group === tile.group && t.type === 'property');
+    const minHouses = Math.min(...groupTiles.map(t => player.houses[t.id] || 0));
+    if (current > minHouses) {
+      this._addLog(`${player.name} must build evenly across the group.`);
       return this.getState();
     }
     const cost = Math.floor(tile.price / 2);

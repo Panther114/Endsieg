@@ -2,7 +2,7 @@
    main.css — Global + Lobby styles for Endsieg
    ===================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -29,7 +29,7 @@
 
 html, body {
   height: 100%;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: var(--green-felt);
   color: var(--text-primary);
   overflow-x: hidden;
@@ -105,8 +105,9 @@ header { text-align: center; }
 }
 
 .form-group label {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
@@ -115,13 +116,13 @@ input[type="text"],
 input[type="number"],
 select {
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-primary);
-  font-family: 'Open Sans', sans-serif;
-  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
 }
@@ -141,16 +142,15 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 20px;
+  padding: 10px 18px;
   border: none;
   border-radius: 6px;
-  font-family: 'Cinzel', serif;
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition: all 0.18s ease;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -183,13 +183,13 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 
 .btn-large {
   width: 100%;
-  padding: 14px 20px;
-  font-size: 1rem;
+  padding: 13px 20px;
+  font-size: 0.92rem;
 }
 
 .btn-small {
-  padding: 7px 14px;
-  font-size: 0.75rem;
+  padding: 6px 12px;
+  font-size: 0.72rem;
 }
 
 /* ── DIVIDER ── */
@@ -198,7 +198,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   align-items: center;
   gap: 12px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .divider::before,
@@ -212,7 +212,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 /* ── ROOM INFO ── */
 .room-info h2 {
   font-family: 'Cinzel', serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.2em;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -221,7 +221,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 
 .room-info h3 {
   font-family: 'Cinzel', serif;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 0.15em;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -231,9 +231,9 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 
 .room-code {
   font-family: 'Courier New', monospace;
-  font-size: 2.8rem;
+  font-size: 2.4rem;
   font-weight: 900;
-  letter-spacing: 0.25em;
+  letter-spacing: 0.3em;
   color: var(--gold);
   text-shadow: 0 0 12px rgba(241,196,15,0.5);
   cursor: pointer;
@@ -244,7 +244,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 .room-code:hover { transform: scale(1.02); }
 
 .copy-hint {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   margin-top: -6px;
 }
@@ -260,7 +260,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .player-dot {
@@ -272,7 +272,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 
 /* ── HINTS ── */
 .hint {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   text-align: center;
   margin-top: 4px;
@@ -292,7 +292,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   border-radius: 6px;
   padding: 12px 16px;
   color: #ff8a80;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   text-align: center;
   width: 100%;
 }
@@ -310,8 +310,8 @@ body.game-page {
 .game-layout {
   display: flex;
   flex: 1;
-  gap: 10px;
-  padding: 10px;
+  gap: 8px;
+  padding: 8px;
   overflow: hidden;
   min-height: 0;
 }
@@ -320,35 +320,35 @@ body.game-page {
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 12px;
   overflow-y: auto;
   backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.panel-left  { width: 200px; flex-shrink: 0; }
-.panel-right { width: 220px; flex-shrink: 0; }
+.panel-left  { width: 190px; flex-shrink: 0; }
+.panel-right { width: 280px; flex-shrink: 0; }
 
 .panel-title {
   font-family: 'Cinzel', serif;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   letter-spacing: 0.15em;
   color: var(--gold);
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
+  padding-bottom: 5px;
 }
 
 /* ── PLAYER CARDS ── */
-.player-cards { display: flex; flex-direction: column; gap: 8px; }
+.player-cards { display: flex; flex-direction: column; gap: 6px; }
 
 .player-card {
   background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 7px 9px;
   transition: border-color 0.2s;
 }
 
@@ -362,15 +362,15 @@ body.game-page {
 .player-card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 7px;
+  margin-bottom: 3px;
 }
 
 .player-token-sm {
-  width: 22px; height: 22px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
@@ -378,7 +378,7 @@ body.game-page {
 }
 
 .player-name-sm {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -386,13 +386,13 @@ body.game-page {
 }
 
 .player-money {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--gold);
   font-weight: 700;
 }
 
 .player-props {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   color: var(--text-muted);
 }
 
@@ -400,11 +400,11 @@ body.game-page {
 .log-panel {
   flex: 1;
   overflow-y: auto;
-  font-size: 0.72rem;
-  line-height: 1.6;
+  font-size: 0.68rem;
+  line-height: 1.55;
   color: var(--text-secondary);
   min-height: 80px;
-  max-height: 180px;
+  max-height: 200px;
 }
 
 .log-panel p { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 2px 0; }
@@ -412,13 +412,13 @@ body.game-page {
 /* ── CHAT ── */
 .chat-log {
   overflow-y: auto;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   line-height: 1.5;
-  max-height: 140px;
+  max-height: 150px;
   min-height: 60px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 6px 8px;
+  padding: 5px 7px;
   background: rgba(0,0,0,0.2);
 }
 
@@ -427,50 +427,13 @@ body.game-page {
 
 .chat-input-row {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 
 .chat-input-row input {
   flex: 1;
-  padding: 7px 10px;
-  font-size: 0.78rem;
-}
-
-/* ── ACTION BAR ── */
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: rgba(0,0,0,0.5);
-  border-top: 1px solid var(--border);
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.btn-action {
-  background: rgba(241,196,15,0.15);
-  border: 1px solid var(--border);
-  color: var(--gold);
-  font-size: 0.78rem;
-  padding: 9px 14px;
-}
-
-.btn-action:hover:not(:disabled) {
-  background: rgba(241,196,15,0.3);
-  border-color: var(--gold);
-}
-
-.btn-buy   { color: #2ecc71; border-color: rgba(46,204,113,0.4); }
-.btn-build { color: #3498db; border-color: rgba(52,152,219,0.4); }
-.btn-pay   { color: #e74c3c; border-color: rgba(231,76,60,0.4);  }
-.btn-end   { color: #95a5a6; border-color: rgba(149,165,166,0.4);}
-
-.turn-indicator {
-  margin-left: auto;
-  font-family: 'Cinzel', serif;
-  font-size: 0.78rem;
-  color: var(--text-muted);
+  padding: 6px 9px;
+  font-size: 0.72rem;
 }
 
 /* ── MODALS ── */
@@ -488,18 +451,18 @@ body.game-page {
   background: #0e2347;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 28px;
+  padding: 24px;
   max-width: 480px;
   width: 90%;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .modal-box h3 {
   font-family: 'Cinzel', serif;
   color: var(--gold);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .modal-actions {
@@ -508,12 +471,82 @@ body.game-page {
   justify-content: flex-end;
 }
 
+/* ── TILE INFO MODAL ── */
+.tile-info-box {
+  max-width: 360px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tile-info-color-bar {
+  height: 8px;
+  width: 100%;
+}
+
+.tile-info-box h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--gold);
+  font-size: 1rem;
+  padding: 16px 20px 0;
+}
+
+.tile-info-box > #tileInfoBody {
+  padding: 8px 20px;
+}
+
+.tile-info-box .modal-actions {
+  padding: 0 20px 16px;
+}
+
+.tile-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.tile-info-row span { color: var(--text-muted); font-size: 0.75rem; }
+.tile-info-row strong { font-weight: 600; }
+
+.tile-info-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.rent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  margin-top: 6px;
+}
+
+.rent-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 3px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rent-table td {
+  padding: 3px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.rent-table tr.rent-active td {
+  color: var(--gold);
+  font-weight: 600;
+}
+
 /* ── BUILD OPTIONS ── */
 .build-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 260px;
+  gap: 7px;
+  max-height: 240px;
   overflow-y: auto;
 }
 
@@ -521,12 +554,12 @@ body.game-page {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 7px 11px;
   background: rgba(0,0,0,0.3);
   border: 1px solid var(--border);
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text-primary);
   transition: border-color 0.15s;
 }
@@ -534,24 +567,25 @@ body.game-page {
 .build-option-btn:hover { border-color: var(--gold); }
 
 /* ── TRADE MODAL ── */
-.trade-modal-box { max-width: 560px; }
+.trade-modal-box { max-width: 540px; }
 
-.trade-form { display: flex; flex-direction: column; gap: 14px; }
+.trade-form { display: flex; flex-direction: column; gap: 12px; }
 
 .trade-sides {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
-.trade-side { display: flex; flex-direction: column; gap: 8px; }
+.trade-side { display: flex; flex-direction: column; gap: 7px; }
 
 .trade-side h4 {
-  font-family: 'Cinzel', serif;
-  font-size: 0.82rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .trade-props { display: flex; flex-direction: column; gap: 4px; }
@@ -560,7 +594,7 @@ body.game-page {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
 }
 
 /* ── WINNER ── */
@@ -624,6 +658,7 @@ body.game-page {
   justify-content: center;
   min-width: 0;
   overflow: hidden;
+  background: transparent;
 }
 
 /* ── SCROLLBARS ── */
@@ -634,14 +669,46 @@ body.game-page {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
-  .panel-left  { width: 170px; }
-  .panel-right { width: 180px; }
+  .panel-left  { width: 160px; }
+  .panel-right { width: 200px; }
 }
 
-@media (max-width: 700px) {
-  .game-layout { flex-direction: column; overflow-y: auto; }
-  .panel-left, .panel-right { width: 100%; max-height: 200px; }
-  body.game-page { overflow: auto; }
+@media (max-width: 768px) {
+  body.game-page {
+    overflow-y: auto;
+    height: auto;
+  }
+  .game-layout {
+    flex-direction: column;
+    overflow-y: auto;
+    height: auto;
+  }
+  .panel-left {
+    width: 100%;
+    max-height: none;
+    overflow-x: auto;
+  }
+  .panel-left .player-cards {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+  .panel-left .player-card {
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+  .panel-right {
+    width: 100%;
+    min-height: 280px;
+  }
+  .board-wrapper {
+    width: 100%;
+  }
+  .btn-center-action {
+    min-height: 36px;
+    font-size: 0.78rem;
+  }
 }
 
 /* ── COLOR PICKER ── */
@@ -652,8 +719,8 @@ body.game-page {
 }
 
 .color-swatch {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
@@ -683,7 +750,7 @@ body.game-page {
 /* ── TOAST NOTIFICATIONS ── */
 .toast-container {
   position: fixed;
-  bottom: 80px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -698,9 +765,9 @@ body.game-page {
   background: rgba(20, 20, 40, 0.92);
   border: 1px solid rgba(241,196,15,0.4);
   border-radius: 8px;
-  padding: 10px 20px;
+  padding: 9px 18px;
   color: var(--text-primary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -712,3 +779,4 @@ body.game-page {
   opacity: 1;
   transform: translateY(0);
 }
+

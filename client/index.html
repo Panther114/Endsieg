@@ -6,7 +6,7 @@
   <title>Endsieg — Multiplayer Board Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
 </head>
 <body>
@@ -45,8 +45,8 @@
 
       <div class="form-group">
         <label for="roomCode">Room Code</label>
-        <input id="roomCode" type="text" placeholder="Enter 6-digit code..." maxlength="6"
-               style="text-transform:uppercase;letter-spacing:4px;text-align:center;" autocomplete="off" />
+        <input id="roomCode" type="text" placeholder="Enter 4-digit code..." maxlength="4"
+               style="text-transform:uppercase;letter-spacing:6px;text-align:center;" autocomplete="off" />
       </div>
 
       <button class="btn btn-secondary btn-large" onclick="joinRoom()">
@@ -63,6 +63,10 @@
       <ul id="playerList" class="player-list"></ul>
 
       <div id="hostControls" style="display:none;">
+        <div class="form-group" style="margin-bottom:8px;">
+          <label for="startingFunds">Starting Funds</label>
+          <input id="startingFunds" type="number" min="500" max="10000" value="1500" step="100" />
+        </div>
         <button class="btn btn-primary btn-large" onclick="startGame()">
           ▶ Start Game
         </button>
