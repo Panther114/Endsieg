@@ -5,7 +5,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const { createRoom, getRoom, addSocketToRoom, removePlayer } = require('./gameManager');
+const { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer } = require('./gameManager');
+const { PLAYER_COLORS } = require('./gameLogic');
 
 const app = express();
 const server = http.createServer(app);
@@ -33,25 +34,38 @@ app.get('/game.html', pageLimiter, (req, res) => {
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
 
-  socket.on('create_room', ({ playerName }) => {
+  socket.on('create_room', ({ playerName, color }) => {
     if (!playerName || !playerName.trim()) {
       return socket.emit('error', { message: 'Player name is required.' });
     }
-    const room = createRoom(socket.id, playerName.trim().slice(0, 16));
+    const resolvedColor = (color && /^#[0-9a-fA-F]{6}$/.test(color)) ? color : PLAYER_COLORS[0];
+    const room = createRoom(socket.id, playerName.trim().slice(0, 16), resolvedColor);
     socket.join(room.id);
     socket.emit('room_created', room.getState());
   });
 
-  socket.on('join_room', ({ roomId, playerName }) => {
+  socket.on('join_room', ({ roomId, playerName, color }) => {
     if (!playerName || !playerName.trim() || !roomId) {
       return socket.emit('error', { message: 'Player name and room code are required.' });
     }
     const room = getRoom(roomId.toUpperCase());
     if (!room) return socket.emit('error', { message: 'Room not found.' });
     if (room.started) return socket.emit('error', { message: 'Game already started.' });
-    if (room.players.length >= 6) return socket.emit('error', { message: 'Room is full.' });
+    if (room.players.length >= 8) return socket.emit('error', { message: 'Room is full.' });
 
-    const added = room.addPlayer(socket.id, playerName.trim().slice(0, 16));
+    const takenColors = new Set(room.players.map(p => p.color));
+    let resolvedColor;
+    if (color && /^#[0-9a-fA-F]{6}$/.test(color)) {
+      if (takenColors.has(color)) {
+        return socket.emit('error', { message: 'Color already taken. Please choose another.' });
+      }
+      resolvedColor = color;
+    } else {
+      // Auto-assign first available palette color
+      resolvedColor = PLAYER_COLORS.find(c => !takenColors.has(c)) || PLAYER_COLORS[0];
+    }
+
+    const added = room.addPlayer(socket.id, playerName.trim().slice(0, 16), resolvedColor);
     if (!added) return socket.emit('error', { message: 'Could not join room.' });
 
     addSocketToRoom(socket.id, roomId.toUpperCase());
@@ -145,6 +159,8 @@ io.on('connection', (socket) => {
         }
         // Update hostId if needed
         if (room.hostId === oldId) room.hostId = socket.id;
+        // Clean up old socket mapping before adding the new one
+        removeSocketMapping(oldId);
         addSocketToRoom(socket.id, roomId.toUpperCase());
         socket.join(roomId.toUpperCase());
         socket.emit('game_updated', room.getState());
@@ -174,10 +190,13 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
-    const room = removePlayer(socket.id);
+    const { room, leftPlayerName } = removePlayer(socket.id);
     if (room) {
       const state = room.getState();
       io.to(room.id).emit('game_updated', state);
+      if (leftPlayerName) {
+        io.to(room.id).emit('player_left', { playerName: leftPlayerName });
+      }
     }
   });
 });
