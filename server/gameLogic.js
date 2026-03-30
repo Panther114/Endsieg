@@ -2,7 +2,16 @@
 
 const BOARD = require('./boardData');
 
-const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e91e63', '#ffd700'];
+const PLAYER_COLORS = [
+  '#7B1FA2',  // Deep Purple
+  '#006064',  // Dark Cyan/Teal
+  '#0288D1',  // Light Blue
+  '#FF6F00',  // Dark Amber
+  '#2E7D32',  // Dark Green
+  '#880E4F',  // Dark Pink/Maroon
+  '#37474F',  // Blue Grey
+  '#4527A0',  // Deep Indigo
+];
 
 const CHANCE_CARDS = [
   { text: 'Advance to GO. Collect $200.', action: 'advance_to', target: 0 },
@@ -141,7 +150,7 @@ class GameRoom {
     }
 
     const prevPos = player.position;
-    player.position = (player.position + roll) % 40;
+    player.position = (player.position + roll) % BOARD.length;
 
     // Check passed GO (new position is less than old means we wrapped around)
     if (player.position < prevPos) {
@@ -246,19 +255,19 @@ class GameRoom {
         this.sendToJail(player);
         break;
       case 'move_back': {
-        player.position = (player.position - card.amount + 40) % 40;
+        player.position = (player.position - card.amount + BOARD.length) % BOARD.length;
         this.handleTile(player, BOARD[player.position]);
         break;
       }
       case 'nearest_railroad': {
-        const railroads = [5, 15, 25, 35];
+        const railroads = BOARD.filter(t => t.type === 'railroad').map(t => t.id);
         let nearest = railroads[0];
-        let minDist = 40;
+        let minDist = BOARD.length;
         for (const r of railroads) {
-          const dist = (r - player.position + 40) % 40;
+          const dist = (r - player.position + BOARD.length) % BOARD.length;
           if (dist < minDist) { minDist = dist; nearest = r; }
         }
-        if (nearest < player.position) {
+        if (nearest < player.position && minDist !== 0) {
           player.money += 200;
           this._addLog(`${player.name} passed GO — collects $200!`);
         }
@@ -464,7 +473,7 @@ class GameRoom {
   }
 
   sendToJail(player) {
-    player.position = 10;
+    player.position = 13;
     player.inJail = true;
     player.jailTurns = 0;
     this._addLog(`${player.name} was sent to Jail!`);

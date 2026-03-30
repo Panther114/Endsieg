@@ -2,7 +2,7 @@
    main.css — Global + Lobby styles for Endsieg
    ===================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=PT+Sans:wght@400;700&family=Playfair+Display:ital,wght@1,900&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -29,7 +29,7 @@
 
 html, body {
   height: 100%;
-  font-family: 'Inter', sans-serif;
+  font-family: 'PT Sans', sans-serif;
   background-color: var(--green-felt);
   color: var(--text-primary);
   overflow-x: hidden;
@@ -64,19 +64,24 @@ html, body {
 header { text-align: center; }
 
 .game-title {
-  font-family: 'Cinzel', serif;
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-style: italic;
   font-weight: 900;
-  font-size: clamp(3rem, 10vw, 5rem);
-  letter-spacing: 0.12em;
+  font-size: clamp(5rem, 15vw, 9rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
   color: var(--gold);
   text-shadow:
-    0 0 20px rgba(241,196,15,0.6),
-    0 2px 4px rgba(0,0,0,0.8);
+    0 0 20px rgba(241,196,15,1),
+    0 0 50px rgba(241,196,15,0.7),
+    0 0 100px rgba(241,196,15,0.3),
+    0 4px 8px rgba(0,0,0,0.95);
   line-height: 1;
 }
 
 .game-subtitle {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans', sans-serif;
+  font-weight: 400;
   font-size: 0.9rem;
   letter-spacing: 0.3em;
   color: var(--text-muted);
@@ -211,7 +216,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 
 /* ── ROOM INFO ── */
 .room-info h2 {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   color: var(--text-muted);
@@ -220,7 +225,7 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 }
 
 .room-info h3 {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
   font-size: 0.72rem;
   letter-spacing: 0.15em;
   color: var(--text-muted);
@@ -303,7 +308,7 @@ body.game-page {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #0a1f3d;
+  background: linear-gradient(135deg, #080d08 0%, #0a180a 60%, #040e1a 100%);
 }
 
 /* ── PANELS (game page) ── */
@@ -317,12 +322,13 @@ body.game-page {
 }
 
 .panel {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: rgba(4, 16, 8, 0.82);
+  border: 1px solid rgba(241,196,15,0.18);
   border-radius: var(--radius);
   padding: 12px;
   overflow-y: auto;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,50,0,0.15);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -332,7 +338,8 @@ body.game-page {
 .panel-right { width: 280px; flex-shrink: 0; }
 
 .panel-title {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
+  font-weight: 700;
   font-size: 0.68rem;
   letter-spacing: 0.15em;
   color: var(--gold);
@@ -354,7 +361,7 @@ body.game-page {
 
 .player-card.active {
   border-color: var(--gold);
-  box-shadow: 0 0 8px rgba(241,196,15,0.3);
+  box-shadow: 0 0 12px rgba(241,196,15,0.5), inset 0 0 8px rgba(241,196,15,0.05);
 }
 
 .player-card.bankrupt { opacity: 0.4; }
@@ -460,7 +467,7 @@ body.game-page {
 }
 
 .modal-box h3 {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
   color: var(--gold);
   font-size: 1.1rem;
 }
@@ -484,7 +491,7 @@ body.game-page {
 }
 
 .tile-info-box h3 {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
   color: var(--gold);
   font-size: 1rem;
   padding: 16px 20px 0;
@@ -617,7 +624,7 @@ body.game-page {
 }
 
 .winner-box h1 {
-  font-family: 'Cinzel', serif;
+  font-family: 'Playfair Display', serif;
   font-size: 3rem;
   color: var(--gold);
   text-shadow: 0 0 30px rgba(241,196,15,0.8);
@@ -625,7 +632,7 @@ body.game-page {
 }
 
 .winner-box h2 {
-  font-family: 'Cinzel', serif;
+  font-family: 'PT Sans Narrow', sans-serif;
   font-size: 2rem;
   color: #fff;
 }

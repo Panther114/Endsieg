@@ -9,7 +9,7 @@ let myRoomId     = null;
 let myPlayerName = '';
 let isHost       = false;
 let roomState    = null;
-let selectedColor = '#e74c3c'; // default to first color
+let selectedColor = '#7B1FA2'; // default to first color
 
 // ── COLOR PICKER ─────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ function showRoomInfo(state) {
   const weOwnIt = myEntry && myEntry.id === mySocketId;
   if (myEntry && !weOwnIt) {
     // Our color is taken — pick the first available one
-    const allColors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e91e63','#ffd700'];
+    const allColors = ['#7B1FA2','#006064','#0288D1','#FF6F00','#2E7D32','#880E4F','#37474F','#4527A0'];
     const available = allColors.find(c => !takenColors.includes(c.toLowerCase()));
     if (available) selectedColor = available;
   }
