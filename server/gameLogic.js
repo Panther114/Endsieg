@@ -473,7 +473,7 @@ class GameRoom {
   }
 
   sendToJail(player) {
-    player.position = 13;
+    player.position = 19;
     player.inJail = true;
     player.jailTurns = 0;
     this._addLog(`${player.name} was sent to Jail!`);

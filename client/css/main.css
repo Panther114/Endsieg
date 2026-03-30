@@ -661,9 +661,10 @@ body.game-page {
 .board-wrapper {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   background: transparent;
 }
