@@ -6,6 +6,7 @@ const socket = io();
 
 let mySocketId  = null;
 let myRoomId    = null;
+let myPlayerName = '';
 let isHost      = false;
 let roomState   = null;
 
@@ -64,6 +65,8 @@ function escapeHtml(str) {
 function createRoom() {
   const name = document.getElementById('playerName').value.trim();
   if (!name) return showError('Please enter your name.');
+  myPlayerName = name;
+  sessionStorage.setItem('endsieg_playerName', name);
   socket.emit('create_room', { playerName: name });
 }
 
@@ -72,6 +75,8 @@ function joinRoom() {
   const code = document.getElementById('roomCode').value.trim().toUpperCase();
   if (!name) return showError('Please enter your name.');
   if (!code || code.length !== 6) return showError('Please enter a valid 6-character room code.');
+  myPlayerName = name;
+  sessionStorage.setItem('endsieg_playerName', name);
   socket.emit('join_room', { roomId: code, playerName: name });
 }
 
@@ -117,6 +122,7 @@ socket.on('room_updated', (state) => {
 });
 
 socket.on('game_started', (state) => {
+  sessionStorage.setItem('endsieg_playerName', myPlayerName);
   window.location.href = `/game.html?room=${encodeURIComponent(myRoomId)}`;
 });
 
