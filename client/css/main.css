@@ -1,8 +1,9 @@
 /* =====================================================================
    main.css — Global + Lobby styles for Endsieg
+   Dark military-strategy aesthetic with gold accents
    ===================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@700&family=PT+Sans:wght@400;700&family=Playfair+Display:ital,wght@1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -11,26 +12,33 @@
 }
 
 :root {
-  --green-felt:    #0d2d5e;
-  --green-mid:     #1a4a8a;
-  --green-light:   #2563c7;
-  --gold:          #f1c40f;
-  --gold-dark:     #d4ac0d;
-  --gold-light:    #f9e04b;
-  --text-primary:  #ffffff;
-  --text-secondary:#e0e0d0;
-  --text-muted:    #a8b09a;
-  --card-bg:       rgba(0, 0, 0, 0.45);
-  --border:        rgba(241, 196, 15, 0.35);
-  --red:           #e74c3c;
-  --blue:          #3498db;
-  --radius:        10px;
+  --bg-dark:    #0a0c10;
+  --bg-panel:   rgba(15, 18, 28, 0.92);
+  --bg-tile:    #12151e;
+  --accent:     #c9a84c;
+  --accent-dim: #8a6f2e;
+  --text-light: #e8e0d0;
+  --text-dim:   #8a8070;
+  --border:     rgba(201, 168, 76, 0.25);
+  --glow:       rgba(201, 168, 76, 0.15);
+  --radius:     10px;
+
+  /* legacy aliases kept for compatibility */
+  --gold:           #c9a84c;
+  --gold-dark:      #8a6f2e;
+  --gold-light:     #e0bc60;
+  --text-primary:   #e8e0d0;
+  --text-secondary: #c8c0b0;
+  --text-muted:     #8a8070;
+  --card-bg:        rgba(15, 18, 28, 0.85);
+  --red:  #e74c3c;
+  --blue: #3498db;
 }
 
 html, body {
   height: 100%;
-  font-family: 'PT Sans', sans-serif;
-  background-color: var(--green-felt);
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-dark);
   color: var(--text-primary);
   overflow-x: hidden;
 }
@@ -64,24 +72,24 @@ html, body {
 header { text-align: center; }
 
 .game-title {
-  font-family: 'Playfair Display', 'Georgia', serif;
-  font-style: italic;
+  font-family: 'Cinzel', serif;
+  font-style: normal;
   font-weight: 900;
-  font-size: clamp(5rem, 15vw, 9rem);
+  font-size: clamp(4rem, 13vw, 8rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--accent);
   text-shadow:
-    0 0 20px rgba(241,196,15,1),
-    0 0 50px rgba(241,196,15,0.7),
-    0 0 100px rgba(241,196,15,0.3),
+    0 0 20px rgba(201,168,76,1),
+    0 0 50px rgba(201,168,76,0.7),
+    0 0 100px rgba(201,168,76,0.3),
     0 4px 8px rgba(0,0,0,0.95);
   line-height: 1;
 }
 
 .game-subtitle {
-  font-family: 'PT Sans', sans-serif;
-  font-weight: 400;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
   font-size: 0.9rem;
   letter-spacing: 0.3em;
   color: var(--text-muted);
@@ -122,7 +130,7 @@ input[type="number"],
 select {
   width: 100%;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.4);
+  background: #1a1e2a;
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-primary);
@@ -135,8 +143,8 @@ select {
 input[type="text"]:focus,
 input[type="number"]:focus,
 select:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px rgba(241,196,15,0.25);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(201,168,76,0.25);
 }
 
 input::placeholder { color: rgba(255,255,255,0.3); }
@@ -150,10 +158,11 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   padding: 10px 18px;
   border: none;
   border-radius: 6px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: all 0.18s ease;
   white-space: nowrap;
@@ -165,14 +174,14 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
-  color: #1a1a0a;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+  color: #0a0c10;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  background: linear-gradient(135deg, var(--gold-light), var(--accent));
   transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(241,196,15,0.4);
+  box-shadow: 0 4px 15px rgba(201,168,76,0.4);
 }
 
 .btn-secondary {
@@ -182,8 +191,8 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: var(--gold);
-  color: var(--gold);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-large {
@@ -235,12 +244,12 @@ input::placeholder { color: rgba(255,255,255,0.3); }
 }
 
 .room-code {
-  font-family: 'Courier New', monospace;
+  font-family: 'Cinzel', serif;
   font-size: 2.4rem;
   font-weight: 900;
   letter-spacing: 0.3em;
-  color: var(--gold);
-  text-shadow: 0 0 12px rgba(241,196,15,0.5);
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(201,168,76,0.5);
   cursor: pointer;
   user-select: all;
   transition: transform 0.1s;
@@ -308,7 +317,7 @@ body.game-page {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(135deg, #080d08 0%, #0a180a 60%, #040e1a 100%);
+  background: #0a0c10;
 }
 
 /* ── PANELS (game page) ── */
@@ -322,13 +331,13 @@ body.game-page {
 }
 
 .panel {
-  background: rgba(4, 16, 8, 0.82);
-  border: 1px solid rgba(241,196,15,0.18);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
   overflow-y: auto;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 4px 30px rgba(0,0,0,0.4), inset 0 0 20px rgba(0,50,0,0.15);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -338,11 +347,11 @@ body.game-page {
 .panel-right { width: 280px; flex-shrink: 0; }
 
 .panel-title {
-  font-family: 'PT Sans Narrow', sans-serif;
+  font-family: 'Cinzel', serif;
   font-weight: 700;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   letter-spacing: 0.15em;
-  color: var(--gold);
+  color: var(--accent);
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
   padding-bottom: 5px;
@@ -352,19 +361,23 @@ body.game-page {
 .player-cards { display: flex; flex-direction: column; gap: 6px; }
 
 .player-card {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 6px;
-  padding: 7px 9px;
-  transition: border-color 0.2s;
+  padding: 8px 10px;
+  transition: all 0.2s;
 }
 
 .player-card.active {
-  border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(241,196,15,0.5), inset 0 0 8px rgba(241,196,15,0.05);
+  border-color: var(--accent);
+  background: rgba(201,168,76,0.08);
+  box-shadow: 0 0 12px rgba(201,168,76,0.15);
 }
 
-.player-card.bankrupt { opacity: 0.4; }
+.player-card.bankrupt {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
 
 .player-card-header {
   display: flex;
@@ -393,9 +406,10 @@ body.game-page {
 }
 
 .player-money {
-  font-size: 0.85rem;
-  color: var(--gold);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
   font-weight: 700;
+  color: #4ade80;
 }
 
 .player-props {
@@ -407,14 +421,24 @@ body.game-page {
 .log-panel {
   flex: 1;
   overflow-y: auto;
+  font-family: 'Inter', sans-serif;
   font-size: 0.68rem;
   line-height: 1.55;
-  color: var(--text-secondary);
+  color: var(--text-dim);
   min-height: 80px;
   max-height: 200px;
 }
 
-.log-panel p { border-bottom: 1px solid rgba(255,255,255,0.05); padding: 2px 0; }
+.log-panel p {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 4px 0;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+
+.log-panel p:first-child {
+  color: var(--text-light);
+}
 
 /* ── CHAT ── */
 .chat-log {
@@ -447,7 +471,7 @@ body.game-page {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,0.8);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -455,7 +479,7 @@ body.game-page {
 }
 
 .modal-box {
-  background: #0e2347;
+  background: #0e1218;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
@@ -467,8 +491,8 @@ body.game-page {
 }
 
 .modal-box h3 {
-  font-family: 'PT Sans Narrow', sans-serif;
-  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  color: var(--accent);
   font-size: 1.1rem;
 }
 
@@ -491,8 +515,8 @@ body.game-page {
 }
 
 .tile-info-box h3 {
-  font-family: 'PT Sans Narrow', sans-serif;
-  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  color: var(--accent);
   font-size: 1rem;
   padding: 16px 20px 0;
 }
@@ -608,7 +632,7 @@ body.game-page {
 .winner-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -624,29 +648,29 @@ body.game-page {
 }
 
 .winner-box h1 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Cinzel', serif;
   font-size: 3rem;
-  color: var(--gold);
-  text-shadow: 0 0 30px rgba(241,196,15,0.8);
+  color: var(--accent);
+  text-shadow: 0 0 30px rgba(201,168,76,0.8);
   animation: winner-glow 1.5s ease-in-out infinite alternate;
 }
 
 .winner-box h2 {
-  font-family: 'PT Sans Narrow', sans-serif;
+  font-family: 'Rajdhani', sans-serif;
   font-size: 2rem;
   color: #fff;
 }
 
 @keyframes winner-glow {
-  from { text-shadow: 0 0 20px rgba(241,196,15,0.6); }
-  to   { text-shadow: 0 0 50px rgba(241,196,15,1), 0 0 80px rgba(241,196,15,0.5); }
+  from { text-shadow: 0 0 20px rgba(201,168,76,0.6); }
+  to   { text-shadow: 0 0 50px rgba(201,168,76,1), 0 0 80px rgba(201,168,76,0.5); }
 }
 
 /* ── LOADING ── */
 .loading-screen {
   position: fixed;
   inset: 0;
-  background: var(--green-felt);
+  background: var(--bg-dark);
   display: flex;
   align-items: center;
   justify-content: center;
