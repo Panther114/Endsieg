@@ -73,12 +73,14 @@ io.on('connection', (socket) => {
     io.to(roomId.toUpperCase()).emit('room_updated', room.getState());
   });
 
-  socket.on('start_game', ({ roomId }) => {
+  socket.on('start_game', ({ roomId, startingFunds }) => {
     const room = getRoom(roomId);
     if (!room) return socket.emit('error', { message: 'Room not found.' });
     if (room.hostId !== socket.id) return socket.emit('error', { message: 'Only host can start.' });
     if (room.players.length < 1) return socket.emit('error', { message: 'Need at least 1 player.' });
-    room.start();
+    const funds = (typeof startingFunds === 'number' && startingFunds >= 500 && startingFunds <= 10000)
+      ? startingFunds : 1500;
+    room.start(funds);
     io.to(roomId).emit('game_started', room.getState());
   });
 

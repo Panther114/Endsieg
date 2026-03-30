@@ -10,6 +10,12 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
+// Color map for board property groups
+const COLOR_MAP = {
+  brown:'#8B4513', cyan:'#00BCD4', pink:'#E91E63', orange:'#FF9800',
+  red:'#F44336', yellow:'#FFC107', green:'#4CAF50', darkblue:'#1a237e'
+};
+
 // ── LOADING TIMEOUT ────────────────────────────────────────────────
 const loadingTimeout = setTimeout(() => {
   const ls = document.getElementById('loadingScreen');
@@ -110,7 +116,6 @@ function hideLoading() {
   const ls = document.getElementById('loadingScreen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 400); }
   document.getElementById('gameLayout').style.display = 'flex';
-  document.getElementById('actionBar').style.display  = 'flex';
 }
 
 // ── RENDER ALL ─────────────────────────────────────────────────────
@@ -118,7 +123,6 @@ function renderAll(state) {
   renderBoard(state);
   renderPlayers(state);
   renderLog(state.log);
-  renderActions(state);
 }
 
 // ── RENDER BOARD ───────────────────────────────────────────────────
@@ -229,23 +233,45 @@ function renderBoard(state) {
       el.classList.add('purchasable');
     }
 
+    // Tile click — show info popup
+    el.addEventListener('click', () => showTileInfo(tile.id));
+
     boardEl.appendChild(el);
   });
 
-  // Center area
+  // Board center actions
   const center = document.createElement('div');
-  center.className = 'board-center';
+  center.className = 'board-center-actions';
+  center.id = 'boardCenterActions';
   center.style.gridRow    = '2 / 11';
   center.style.gridColumn = '2 / 11';
+  updateBoardCenter(state, center);
+  boardEl.appendChild(center);
+}
 
+// ── BOARD CENTER ACTIONS ───────────────────────────────────────────
+function updateBoardCenter(state, centerEl) {
+  const el = centerEl || document.getElementById('boardCenterActions');
+  if (!el) return;
+  el.innerHTML = '';
+
+  const isMyTurn = state.currentPlayerId === myId;
+  const myPlayer = state.players.find(p => p.id === myId);
+  const phase = state.turnPhase;
+  const currPlayer = state.players.find(p => p.id === state.currentPlayerId);
+
+  // Title
   const title = document.createElement('div');
   title.className = 'center-title';
   title.textContent = 'ENDSIEG';
+  el.appendChild(title);
 
   const sub = document.createElement('div');
   sub.className = 'center-subtitle';
-  sub.textContent = 'Strategy Board Game';
+  sub.textContent = 'World Strategy';
+  el.appendChild(sub);
 
+  // Dice
   const diceContainer = document.createElement('div');
   diceContainer.className = 'dice-container';
   diceContainer.id = 'diceDisplay';
@@ -254,19 +280,65 @@ function renderBoard(state) {
   } else {
     diceContainer.innerHTML = '<div class="die">🎲</div><div class="die">🎲</div>';
   }
+  el.appendChild(diceContainer);
 
+  // Turn info
   const info = document.createElement('div');
   info.className = 'center-player-info';
-  const currPlayer = state.players.find(p => p.id === state.currentPlayerId);
   if (currPlayer) {
-    info.innerHTML = `<strong style="color:${currPlayer.color}">${escapeHtml(currPlayer.name)}'s turn</strong><span>Phase: ${state.turnPhase}</span>`;
+    if (isMyTurn && myPlayer && !myPlayer.bankrupt) {
+      info.innerHTML = `<strong style="color:${currPlayer.color}">Your turn!</strong><span>Phase: ${phase}</span>`;
+    } else {
+      info.innerHTML = `<strong style="color:${currPlayer.color}">${escapeHtml(currPlayer.name)}'s turn</strong>`;
+    }
   }
+  el.appendChild(info);
 
-  center.appendChild(title);
-  center.appendChild(sub);
-  center.appendChild(diceContainer);
-  center.appendChild(info);
-  boardEl.appendChild(center);
+  // Action buttons (only if it's my turn)
+  if (isMyTurn && myPlayer && !myPlayer.bankrupt) {
+    const btnRow = document.createElement('div');
+    btnRow.className = 'center-btn-row';
+
+    if (phase === 'roll') {
+      btnRow.appendChild(makeCenterBtn('🎲 Roll', 'roll', rollDice));
+      if (myPlayer.inJail && myPlayer.money >= 50) {
+        btnRow.appendChild(makeCenterBtn('🔓 Pay Jail', 'pay', payJail));
+      }
+    }
+
+    if (phase === 'action') {
+      const tile = state.board && state.board[myPlayer.position];
+      const owned = state.propertyOwners && state.propertyOwners[myPlayer.position];
+      if (tile && ['property','railroad','utility'].includes(tile.type) && !owned && myPlayer.money >= tile.price) {
+        btnRow.appendChild(makeCenterBtn('💰 Buy', 'buy', buyProperty));
+      }
+
+      // Build house button if any owned monopoly exists
+      const canBuild = myPlayer.properties.some(pid => {
+        const t = state.board && state.board[pid];
+        if (!t || t.type !== 'property') return false;
+        const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
+        return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
+      });
+      if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+
+      btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
+    }
+
+    if (phase === 'end') {
+      btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
+    }
+
+    el.appendChild(btnRow);
+  }
+}
+
+function makeCenterBtn(label, type, fn) {
+  const btn = document.createElement('button');
+  btn.className = `btn-center-action btn-center-${type}`;
+  btn.textContent = label;
+  btn.addEventListener('click', fn);
+  return btn;
 }
 
 function buildTileClass(tile, row, col) {
@@ -309,6 +381,80 @@ function renderDice(roll, container) {
     setTimeout(() => die.classList.remove('rolling'), 500);
   });
 }
+
+// ── TILE INFO MODAL ────────────────────────────────────────────────
+function showTileInfo(tileId) {
+  if (!gameState) return;
+  const tile = gameState.board && gameState.board[tileId];
+  if (!tile) return;
+
+  document.getElementById('tileInfoName').textContent = tile.name;
+
+  const colorBar = document.getElementById('tileInfoColorBar');
+  if (tile.color && COLOR_MAP[tile.color]) {
+    colorBar.style.background = COLOR_MAP[tile.color];
+    colorBar.style.display = 'block';
+  } else {
+    colorBar.style.display = 'none';
+  }
+
+  const body = document.getElementById('tileInfoBody');
+  body.innerHTML = '';
+
+  if (tile.type === 'property') {
+    const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
+    const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
+    const ownerHouses = owner && owner.houses ? (owner.houses[tileId] || 0) : 0;
+
+    let html = `<p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>`;
+    if (owner) {
+      html += `<p class="tile-info-row"><span>Owner</span><strong style="color:${owner.color}">${escapeHtml(owner.name)}</strong></p>`;
+      html += `<p class="tile-info-row"><span>Built</span><strong>${ownerHouses === 5 ? '🏨 Hotel' : ownerHouses > 0 ? `🏠 ×${ownerHouses}` : 'None'}</strong></p>`;
+    } else {
+      html += `<p class="tile-info-row"><span>Owner</span><strong>Unowned</strong></p>`;
+    }
+    html += `<table class="rent-table"><thead><tr><th>Level</th><th>Rent</th></tr></thead><tbody>`;
+    const labels = ['Base', '1 House', '2 Houses', '3 Houses', '4 Houses', 'Hotel'];
+    tile.rent.forEach((r, i) => {
+      const active = ownerHouses === (i === 0 ? 0 : i);
+      html += `<tr${active ? ' class="rent-active"' : ''}><td>${labels[i] || i}</td><td>$${r}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    body.innerHTML = html;
+  } else if (tile.type === 'railroad') {
+    const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
+    const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
+    let html = `<p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>`;
+    html += `<p class="tile-info-row"><span>Owner</span><strong${owner ? ` style="color:${owner.color}"` : ''}>${owner ? escapeHtml(owner.name) : 'Unowned'}</strong></p>`;
+    html += `<table class="rent-table"><thead><tr><th>RRs Owned</th><th>Rent</th></tr></thead><tbody>`;
+    tile.rent.forEach((r, i) => {
+      html += `<tr><td>${i + 1}</td><td>$${r}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    body.innerHTML = html;
+  } else if (tile.type === 'utility') {
+    const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
+    const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
+    body.innerHTML = `
+      <p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>
+      <p class="tile-info-row"><span>Owner</span><strong${owner ? ` style="color:${owner.color}"` : ''}>${owner ? escapeHtml(owner.name) : 'Unowned'}</strong></p>
+      <p class="tile-info-desc">Rent: 4× dice (1 owned) or 10× dice (2 owned)</p>
+    `;
+  } else if (tile.type === 'tax') {
+    body.innerHTML = `<p class="tile-info-row"><span>Pay</span><strong>$${tile.cost}</strong></p>`;
+  } else {
+    body.innerHTML = `<p class="tile-info-desc">${tile.name}</p>`;
+  }
+
+  document.getElementById('tileInfoModal').style.display = 'flex';
+}
+
+function closeTileInfo(e) {
+  if (e.target === document.getElementById('tileInfoModal')) {
+    document.getElementById('tileInfoModal').style.display = 'none';
+  }
+}
+window.closeTileInfo = closeTileInfo;
 
 // ── RENDER PLAYERS ─────────────────────────────────────────────────
 function renderPlayers(state) {
@@ -358,66 +504,6 @@ function renderLog(log) {
     p.textContent = entry;
     panel.appendChild(p);
   });
-}
-
-// ── RENDER ACTIONS ─────────────────────────────────────────────────
-function renderActions(state) {
-  const isMyTurn = state.currentPlayerId === myId;
-  const myPlayer = state.players.find(p => p.id === myId);
-  const phase = state.turnPhase;
-
-  const btnRoll    = document.getElementById('btnRoll');
-  const btnBuy     = document.getElementById('btnBuy');
-  const btnBuild   = document.getElementById('btnBuild');
-  const btnPayJail = document.getElementById('btnPayJail');
-  const btnEnd     = document.getElementById('btnEnd');
-  const indicator  = document.getElementById('turnIndicator');
-
-  // Hide all first
-  btnRoll.style.display    = 'none';
-  btnBuy.style.display     = 'none';
-  btnBuild.style.display   = 'none';
-  btnPayJail.style.display = 'none';
-  btnEnd.style.display     = 'none';
-
-  if (!isMyTurn || !myPlayer || myPlayer.bankrupt) {
-    const currPlayer = state.players.find(p => p.id === state.currentPlayerId);
-    indicator.textContent = currPlayer ? `${currPlayer.name}'s turn` : '';
-    return;
-  }
-
-  indicator.textContent = 'Your turn!';
-
-  if (phase === 'roll') {
-    btnRoll.style.display = 'inline-flex';
-    if (myPlayer.inJail && myPlayer.money >= 50) {
-      btnPayJail.style.display = 'inline-flex';
-    }
-  }
-
-  if (phase === 'action') {
-    // Check if current tile is buyable
-    const tile = state.board && state.board[myPlayer.position];
-    const owned = state.propertyOwners && state.propertyOwners[myPlayer.position];
-    if (tile && ['property','railroad','utility'].includes(tile.type) && !owned) {
-      btnBuy.style.display = 'inline-flex';
-    }
-
-    // Build house button if any owned monopoly exists
-    const canBuild = myPlayer.properties.some(pid => {
-      const t = state.board && state.board[pid];
-      if (!t || t.type !== 'property') return false;
-      const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
-      return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
-    });
-    if (canBuild) btnBuild.style.display = 'inline-flex';
-
-    btnEnd.style.display = 'inline-flex';
-  }
-
-  if (phase === 'end') {
-    btnEnd.style.display = 'inline-flex';
-  }
 }
 
 // ── CHAT ───────────────────────────────────────────────────────────
@@ -476,6 +562,10 @@ function openBuildModal() {
 
     const current = (myPlayer.houses && myPlayer.houses[pid]) || 0;
     if (current >= 5) return;
+
+    // Even building check: only show if we can build here
+    const minHouses = Math.min(...groupTiles.map(t => myPlayer.houses && myPlayer.houses[t.id] || 0));
+    if (current > minHouses) return;
 
     const cost = Math.floor(tile.price / 2);
     const btn = document.createElement('button');
@@ -649,12 +739,7 @@ function escapeHtml(str) {
 }
 
 function colorForGroup(color) {
-  const map = {
-    brown: '#955436', cyan: '#aae0fa', pink: '#d93a96',
-    orange: '#f7941d', red: '#ed1b24', yellow: '#fef200',
-    green: '#1fb25a', blue: '#0072bb'
-  };
-  return map[color] || '#888';
+  return COLOR_MAP[color] || '#888';
 }
 
 // ── TOAST NOTIFICATIONS ────────────────────────────────────────────
