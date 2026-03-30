@@ -97,6 +97,10 @@ socket.on('error', ({ message }) => {
   alert('Error: ' + message);
 });
 
+socket.on('player_left', ({ playerName }) => {
+  showToast(`${playerName} has left the game.`);
+});
+
 // ── HIDE LOADING ───────────────────────────────────────────────────
 function hideLoading() {
   clearTimeout(loadingTimeout);
@@ -648,4 +652,25 @@ function colorForGroup(color) {
     green: '#1fb25a', blue: '#0072bb'
   };
   return map[color] || '#888';
+}
+
+// ── TOAST NOTIFICATIONS ────────────────────────────────────────────
+function showToast(message) {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+  // Trigger transition
+  requestAnimationFrame(() => toast.classList.add('toast-visible'));
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
 }

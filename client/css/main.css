@@ -643,3 +643,72 @@ body.game-page {
   .panel-left, .panel-right { width: 100%; max-height: 200px; }
   body.game-page { overflow: auto; }
 }
+
+/* ── COLOR PICKER ── */
+.color-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+  outline: none;
+  padding: 0;
+}
+
+.color-swatch:hover:not(:disabled) {
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
+
+.color-swatch.selected {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+  transform: scale(1.1);
+}
+
+.color-swatch.taken {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── TOAST NOTIFICATIONS ── */
+.toast-container {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 4000;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(20, 20, 40, 0.92);
+  border: 1px solid rgba(241,196,15,0.4);
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+
+.toast.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}

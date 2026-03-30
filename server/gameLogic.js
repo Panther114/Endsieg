@@ -2,7 +2,7 @@
 
 const BOARD = require('./boardData');
 
-const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e91e63', '#ffd700'];
 
 const CHANCE_CARDS = [
   { text: 'Advance to GO. Collect $200.', action: 'advance_to', target: 0 },
@@ -36,11 +36,11 @@ function shuffle(arr) {
 }
 
 class GameRoom {
-  constructor(id, hostId, hostName) {
+  constructor(id, hostId, hostName, hostColor) {
     this.id = id;
     this.hostId = hostId;
     this.started = false;
-    this.players = [this._makePlayer(hostId, hostName, 0)];
+    this.players = [this._makePlayer(hostId, hostName, hostColor || PLAYER_COLORS[0])];
     this.currentPlayerIndex = 0;
     this.turnPhase = 'roll';
     this.log = [];
@@ -57,7 +57,7 @@ class GameRoom {
     this._jailFreeChest = null;
   }
 
-  _makePlayer(id, name, colorIndex) {
+  _makePlayer(id, name, color) {
     return {
       id,
       name,
@@ -68,14 +68,18 @@ class GameRoom {
       inJail: false,
       jailTurns: 0,
       bankrupt: false,
-      color: PLAYER_COLORS[colorIndex % PLAYER_COLORS.length]
+      color: color || PLAYER_COLORS[0]
     };
   }
 
-  addPlayer(id, name) {
-    if (this.started || this.players.length >= 6) return false;
+  addPlayer(id, name, color) {
+    if (this.started || this.players.length >= 8) return false;
     if (this.players.find(p => p.id === id)) return false;
-    this.players.push(this._makePlayer(id, name, this.players.length));
+    // Default to next available palette color if none provided
+    const resolvedColor = (color && /^#[0-9a-fA-F]{6}$/.test(color))
+      ? color
+      : PLAYER_COLORS[this.players.length % PLAYER_COLORS.length];
+    this.players.push(this._makePlayer(id, name, resolvedColor));
     return true;
   }
 
@@ -508,4 +512,4 @@ class GameRoom {
   }
 }
 
-module.exports = GameRoom;
+module.exports = { GameRoom, PLAYER_COLORS };

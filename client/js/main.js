@@ -4,11 +4,25 @@
 
 const socket = io();
 
-let mySocketId  = null;
-let myRoomId    = null;
+let mySocketId   = null;
+let myRoomId     = null;
 let myPlayerName = '';
-let isHost      = false;
-let roomState   = null;
+let isHost       = false;
+let roomState    = null;
+let selectedColor = '#e74c3c'; // default to first color
+
+// ── COLOR PICKER ─────────────────────────────────────────────────────
+
+(function initColorPicker() {
+  const swatches = document.querySelectorAll('.color-swatch');
+  swatches.forEach(sw => {
+    sw.addEventListener('click', () => {
+      swatches.forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      selectedColor = sw.dataset.color;
+    });
+  });
+})();
 
 // ── HELPERS ──────────────────────────────────────────────────────────
 
@@ -43,6 +57,31 @@ function showRoomInfo(state) {
      </li>`
   ).join('');
 
+  // Grey out colors already taken by other players; auto-switch if ours was taken
+  const takenColors = state.players.map(p => p.color.toLowerCase());
+  // Check if our selected color was just taken by someone else
+  const myEntry = state.players.find(p => p.color.toLowerCase() === selectedColor.toLowerCase());
+  const weOwnIt = myEntry && myEntry.id === mySocketId;
+  if (myEntry && !weOwnIt) {
+    // Our color is taken — pick the first available one
+    const allColors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e91e63','#ffd700'];
+    const available = allColors.find(c => !takenColors.includes(c.toLowerCase()));
+    if (available) selectedColor = available;
+  }
+
+  const swatches = document.querySelectorAll('.color-swatch');
+  swatches.forEach(sw => {
+    const color = sw.dataset.color.toLowerCase();
+    sw.classList.remove('selected', 'taken');
+    sw.disabled = false;
+    if (color === selectedColor.toLowerCase()) {
+      sw.classList.add('selected');
+    } else if (takenColors.includes(color)) {
+      sw.classList.add('taken');
+      sw.disabled = true;
+    }
+  });
+
   if (isHost) {
     document.getElementById('hostControls').style.display = 'block';
     document.getElementById('guestWait').style.display = 'none';
@@ -67,7 +106,7 @@ function createRoom() {
   if (!name) return showError('Please enter your name.');
   myPlayerName = name;
   sessionStorage.setItem('endsieg_playerName', name);
-  socket.emit('create_room', { playerName: name });
+  socket.emit('create_room', { playerName: name, color: selectedColor });
 }
 
 function joinRoom() {
@@ -77,7 +116,7 @@ function joinRoom() {
   if (!code || code.length !== 6) return showError('Please enter a valid 6-character room code.');
   myPlayerName = name;
   sessionStorage.setItem('endsieg_playerName', name);
-  socket.emit('join_room', { roomId: code, playerName: name });
+  socket.emit('join_room', { roomId: code, playerName: name, color: selectedColor });
 }
 
 function startGame() {

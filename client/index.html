@@ -23,6 +23,20 @@
         <input id="playerName" type="text" placeholder="Enter your name..." maxlength="16" autocomplete="off" />
       </div>
 
+      <div class="form-group">
+        <label>Choose Your Color</label>
+        <div id="colorPicker" class="color-picker">
+          <button type="button" class="color-swatch selected" data-color="#e74c3c" style="background:#e74c3c;" title="Red" aria-label="Red"></button>
+          <button type="button" class="color-swatch" data-color="#3498db" style="background:#3498db;" title="Blue" aria-label="Blue"></button>
+          <button type="button" class="color-swatch" data-color="#2ecc71" style="background:#2ecc71;" title="Green" aria-label="Green"></button>
+          <button type="button" class="color-swatch" data-color="#f39c12" style="background:#f39c12;" title="Orange" aria-label="Orange"></button>
+          <button type="button" class="color-swatch" data-color="#9b59b6" style="background:#9b59b6;" title="Purple" aria-label="Purple"></button>
+          <button type="button" class="color-swatch" data-color="#1abc9c" style="background:#1abc9c;" title="Teal" aria-label="Teal"></button>
+          <button type="button" class="color-swatch" data-color="#e91e63" style="background:#e91e63;" title="Pink" aria-label="Pink"></button>
+          <button type="button" class="color-swatch" data-color="#ffd700" style="background:#ffd700;" title="Gold" aria-label="Gold"></button>
+        </div>
+      </div>
+
       <button class="btn btn-primary btn-large" onclick="createRoom()">
         ⚔️ Create New Room
       </button>
