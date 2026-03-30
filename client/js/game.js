@@ -10,6 +10,22 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
+// ── LOADING TIMEOUT ────────────────────────────────────────────────
+const loadingTimeout = setTimeout(() => {
+  const ls = document.getElementById('loadingScreen');
+  if (ls) {
+    const p = ls.querySelector('p');
+    if (p) {
+      p.textContent = 'Could not connect to game room. ';
+      const link = document.createElement('a');
+      link.href = '/';
+      link.textContent = 'Return to lobby';
+      link.style.color = '#f1c40f';
+      p.appendChild(link);
+    }
+  }
+}, 8000);
+
 // ── DICE FACES ─────────────────────────────────────────────────────
 const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
@@ -44,6 +60,14 @@ socket.on('connect', () => {
     window.location.href = '/';
     return;
   }
+  // Get playerName from sessionStorage (set by lobby before redirect)
+  const playerName = sessionStorage.getItem('endsieg_playerName') || '';
+  socket.emit('request_game_state', { roomId, playerName });
+});
+
+socket.on('room_updated', () => {
+  // Game hasn't started yet — redirect back to lobby
+  window.location.href = '/';
 });
 
 socket.on('game_started', (state) => {
@@ -75,6 +99,7 @@ socket.on('error', ({ message }) => {
 
 // ── HIDE LOADING ───────────────────────────────────────────────────
 function hideLoading() {
+  clearTimeout(loadingTimeout);
   const ls = document.getElementById('loadingScreen');
   if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 400); }
   document.getElementById('gameLayout').style.display = 'flex';

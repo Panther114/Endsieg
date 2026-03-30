@@ -122,6 +122,43 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('game_updated', state);
   });
 
+  socket.on('request_game_state', ({ roomId, playerName }) => {
+    if (!roomId) return socket.emit('error', { message: 'Room ID is required.' });
+    const room = getRoom(roomId.toUpperCase());
+    if (!room) {
+      return socket.emit('error', { message: 'Room not found or expired.' });
+    }
+
+    if (room.started) {
+      // Find a matching player by name (for reconnect after redirect)
+      const name = (playerName || '').toLowerCase().trim();
+      const existingPlayer = room.players.find(p => p.name.toLowerCase() === name);
+      if (existingPlayer) {
+        // Update their socket ID to the new one
+        const oldId = existingPlayer.id;
+        existingPlayer.id = socket.id;
+        // Update propertyOwners map
+        for (const tileId of Object.keys(room.propertyOwners)) {
+          if (room.propertyOwners[tileId] === oldId) {
+            room.propertyOwners[tileId] = socket.id;
+          }
+        }
+        // Update hostId if needed
+        if (room.hostId === oldId) room.hostId = socket.id;
+        addSocketToRoom(socket.id, roomId.toUpperCase());
+        socket.join(roomId.toUpperCase());
+        socket.emit('game_updated', room.getState());
+      } else {
+        socket.emit('error', { message: 'Game already started without you.' });
+      }
+    } else {
+      // Game not yet started — re-join socket to room and send room state
+      addSocketToRoom(socket.id, roomId.toUpperCase());
+      socket.join(roomId.toUpperCase());
+      socket.emit('room_updated', room.getState());
+    }
+  });
+
   socket.on('chat_message', ({ roomId, message }) => {
     if (!roomId || !message) return;
     const room = getRoom(roomId);
