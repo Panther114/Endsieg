@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer } = require('./gameManager');
+const { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer } = require('./gameManager');
 const { PLAYER_COLORS } = require('./gameLogic');
 
 const app = express();
@@ -163,6 +163,8 @@ io.on('connection', (socket) => {
         removeSocketMapping(oldId);
         addSocketToRoom(socket.id, roomId.toUpperCase());
         socket.join(roomId.toUpperCase());
+        // Cancel any pending disconnect grace timer for this player
+        cancelGraceTimer(roomId.toUpperCase(), existingPlayer.name);
         socket.emit('game_updated', room.getState());
       } else {
         socket.emit('error', { message: 'Game already started without you.' });
@@ -190,12 +192,15 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`Player disconnected: ${socket.id}`);
-    const { room, leftPlayerName } = removePlayer(socket.id);
-    if (room) {
-      const state = room.getState();
-      io.to(room.id).emit('game_updated', state);
-      if (leftPlayerName) {
-        io.to(room.id).emit('player_left', { playerName: leftPlayerName });
+    const { room, leftPlayerName, gracePending } = removePlayer(socket.id, io);
+    if (room && !gracePending) {
+      if (!room.started) {
+        io.to(room.id).emit('room_updated', room.getState());
+      } else {
+        io.to(room.id).emit('game_updated', room.getState());
+        if (leftPlayerName) {
+          io.to(room.id).emit('player_left', { playerName: leftPlayerName });
+        }
       }
     }
   });

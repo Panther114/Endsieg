@@ -11,9 +11,9 @@
 }
 
 :root {
-  --green-felt:    #1a472a;
-  --green-mid:     #2d6a4f;
-  --green-light:   #40916c;
+  --green-felt:    #0d2d5e;
+  --green-mid:     #1a4a8a;
+  --green-light:   #2563c7;
   --gold:          #f1c40f;
   --gold-dark:     #d4ac0d;
   --gold-light:    #f9e04b;
@@ -43,7 +43,7 @@ html, body {
   pointer-events: none;
   background:
     radial-gradient(ellipse at 20% 50%, rgba(241,196,15,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(45,106,79,0.3) 0%, transparent 60%);
+    radial-gradient(ellipse at 80% 20%, rgba(26,74,138,0.3) 0%, transparent 60%);
   z-index: 0;
 }
 
@@ -303,7 +303,7 @@ body.game-page {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  background: #1a2e1a;
+  background: #0a1f3d;
 }
 
 /* ── PANELS (game page) ── */
@@ -485,7 +485,7 @@ body.game-page {
 }
 
 .modal-box {
-  background: #162b1e;
+  background: #0e2347;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 28px;

@@ -6,6 +6,10 @@ const { GameRoom } = require('./gameLogic');
 const rooms = new Map();
 // socketId -> roomId map for quick disconnect lookup
 const socketRooms = new Map();
+// `${roomId}:${playerName.toLowerCase()}` -> { timer, roomId, playerName }
+const disconnectTimers = new Map();
+
+const RECONNECT_GRACE_MS = 12000; // 12s grace for page-navigation disconnects
 
 function createRoom(hostId, hostName, hostColor) {
   const id = uuidv4().replace(/-/g, '').slice(0, 6).toUpperCase();
@@ -27,7 +31,20 @@ function removeSocketMapping(socketId) {
   socketRooms.delete(socketId);
 }
 
-function removePlayer(socketId) {
+/**
+ * Called when a socket reconnects via request_game_state.
+ * Cancels any pending disconnect grace timer for this player by name.
+ */
+function cancelGraceTimer(roomId, playerName) {
+  const key = `${roomId}:${playerName.toLowerCase()}`;
+  const entry = disconnectTimers.get(key);
+  if (entry) {
+    clearTimeout(entry.timer);
+    disconnectTimers.delete(key);
+  }
+}
+
+function removePlayer(socketId, io) {
   const roomId = socketRooms.get(socketId);
   socketRooms.delete(socketId);
   if (!roomId) return { room: null, leftPlayerName: null };
@@ -36,7 +53,7 @@ function removePlayer(socketId) {
   if (!room) return { room: null, leftPlayerName: null };
 
   if (!room.started) {
-    // Just remove from lobby
+    // Lobby: remove immediately
     room.players = room.players.filter(p => p.id !== socketId);
     if (room.players.length === 0) {
       rooms.delete(roomId);
@@ -49,20 +66,52 @@ function removePlayer(socketId) {
     return { room, leftPlayerName: null };
   }
 
-  // Game in progress — eliminate the player
+  // Game in progress — use grace period to allow reconnect after page navigation
   const player = room.players.find(p => p.id === socketId);
-  const leftPlayerName = player ? player.name : null;
-  if (player && !player.bankrupt) {
-    room.eliminatePlayer(player);
+  if (!player || player.bankrupt) {
+    return { room, leftPlayerName: null };
   }
 
-  const activePlayers = room.players.filter(p => !p.bankrupt);
-  if (activePlayers.length === 0) {
-    rooms.delete(roomId);
-    return { room: null, leftPlayerName };
-  }
+  const playerName = player.name;
+  const key = `${roomId}:${playerName.toLowerCase()}`;
 
-  return { room, leftPlayerName };
+  // Cancel any existing timer for this player (safety)
+  const existing = disconnectTimers.get(key);
+  if (existing) clearTimeout(existing.timer);
+
+  // Start grace period — only eliminate if they don't reconnect in time
+  const timer = setTimeout(() => {
+    disconnectTimers.delete(key);
+    const currentRoom = rooms.get(roomId);
+    if (!currentRoom) return;
+
+    // Check that the player hasn't reconnected (socket mapping re-established)
+    const hasReconnected = currentRoom.players.find(
+      p => p.name.toLowerCase() === playerName.toLowerCase() &&
+        !p.bankrupt &&
+        socketRooms.get(p.id) === roomId
+    );
+
+    if (!hasReconnected) {
+      const stillThere = currentRoom.players.find(
+        p => p.name.toLowerCase() === playerName.toLowerCase() && !p.bankrupt
+      );
+      if (stillThere) {
+        currentRoom.eliminatePlayer(stillThere);
+      }
+      const activePlayers = currentRoom.players.filter(p => !p.bankrupt);
+      if (activePlayers.length === 0) {
+        rooms.delete(roomId);
+      } else if (io) {
+        io.to(roomId).emit('game_updated', currentRoom.getState());
+        io.to(roomId).emit('player_left', { playerName });
+      }
+    }
+  }, RECONNECT_GRACE_MS);
+
+  disconnectTimers.set(key, { timer, roomId, playerName });
+
+  return { room: null, leftPlayerName: playerName, gracePending: true };
 }
 
-module.exports = { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer };
+module.exports = { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer };

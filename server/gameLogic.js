@@ -165,6 +165,9 @@ class GameRoom {
       case 'tax':
         player.money -= tile.cost;
         this._addLog(`${player.name} paid $${tile.cost} tax.`);
+        if (player.money < 0 && !player.bankrupt) {
+          this.eliminatePlayer(player);
+        }
         break;
 
       case 'go_to_jail':
@@ -185,6 +188,9 @@ class GameRoom {
             player.money -= rent;
             owner.money += rent;
             this._addLog(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}.`);
+            if (player.money < 0 && !player.bankrupt) {
+              this.eliminatePlayer(player);
+            }
           }
         }
         break;
