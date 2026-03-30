@@ -159,7 +159,7 @@ class GameRoom {
     }
 
     const tile = BOARD[player.position];
-    this._addLog(`${player.name} rolled ${d1}+${d2}=${roll} → landed on ${tile.name}`);
+    this._addLog(`${player.name} rolled ${d1}+${d2}=${roll}`);
 
     this.handleTile(player, tile);
     this.turnPhase = isDouble ? 'roll' : 'action';
@@ -191,8 +191,7 @@ class GameRoom {
       case 'utility': {
         const ownerId = this.propertyOwners[tile.id];
         if (!ownerId) {
-          // unowned — player can buy it
-          this._addLog(`${tile.name} is for sale at $${tile.price}.`);
+          // unowned — player can buy it (no log message needed)
         } else if (ownerId !== player.id) {
           const owner = this.players.find(p => p.id === ownerId);
           if (owner && !owner.bankrupt) {
@@ -473,7 +472,7 @@ class GameRoom {
   }
 
   sendToJail(player) {
-    player.position = 19;
+    player.position = 13;
     player.inJail = true;
     player.jailTurns = 0;
     this._addLog(`${player.name} was sent to Jail!`);

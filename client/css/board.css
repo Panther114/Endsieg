@@ -19,10 +19,10 @@
   --corner-size: clamp(50px, 8vw, 90px);
 }
 
-/* ── BOARD CONTAINER (20 cols × 10 rows, fills wrapper) ── */
+/* ── BOARD CONTAINER (14 cols x 10 rows, fills wrapper) ── */
 .board {
   display: grid;
-  grid-template-columns: var(--corner-size) repeat(18, 1fr) var(--corner-size);
+  grid-template-columns: var(--corner-size) repeat(12, 1fr) var(--corner-size);
   grid-template-rows:    var(--corner-size) repeat(8,  1fr) var(--corner-size);
   width: 100%;
   height: 100%;
@@ -243,7 +243,7 @@
 
 /* ── BOARD CENTER ACTIONS ── */
 .board-center-actions {
-  grid-column: 2 / 20;
+  grid-column: 2 / 14;
   grid-row: 2 / 10;
   background: radial-gradient(ellipse at center, #12151e 0%, #0a0c10 100%);
   background-image: url('../bg.png'), radial-gradient(ellipse at center, #12151e 0%, #0a0c10 100%);

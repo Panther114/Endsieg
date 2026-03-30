@@ -48,18 +48,17 @@ const loadingTimeout = setTimeout(() => {
 // ── DICE FACES removed — using numeric display ──────────────────────
 
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
-// Maps tile id -> [gridRow, gridCol] (1-indexed, 20x10 grid)
+// Maps tile id -> [gridRow, gridCol] (1-indexed, 14x10 grid)
 function buildPositionMap() {
   const pos = {};
-  const COLS = 20, ROWS = 10;
-  // Bottom row (row ROWS): tile 0 at col COLS, going right→left
-  for (let i = 0; i <= 19; i++) pos[i] = [ROWS, COLS - i];           // ids 0-19
-  // Left col (col 1): rows ROWS-1 → 2 (8 tiles), ids 20-27
-  for (let i = 0; i < 8; i++) pos[20 + i] = [ROWS - 1 - i, 1];      // ids 20-27
-  // Top row (row 1): col 1→COLS, ids 28-47
-  for (let i = 0; i <= 19; i++) pos[28 + i] = [1, i + 1];            // ids 28-47
-  // Right col (col COLS): rows 2→ROWS-1, ids 48-55
-  for (let i = 0; i < 8; i++) pos[48 + i] = [2 + i, COLS];          // ids 48-55
+  // Bottom row (row 10): tiles 0-13, right to left (col 14 down to 1)
+  for (let i = 0; i <= 13; i++) pos[i] = [10, 14 - i];
+  // Left col (col 1): tiles 14-21, row 9 down to 2
+  for (let i = 14; i <= 21; i++) pos[i] = [23 - i, 1];
+  // Top row (row 1): tiles 22-35, col 1 to 14
+  for (let i = 22; i <= 35; i++) pos[i] = [1, i - 21];
+  // Right col (col 14): tiles 36-43, row 2 to 9
+  for (let i = 36; i <= 43; i++) pos[i] = [i - 34, 14];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -261,7 +260,7 @@ function renderBoard(state) {
   center.className = 'board-center-actions';
   center.id = 'boardCenterActions';
   center.style.gridRow    = '2 / 10';
-  center.style.gridColumn = '2 / 20';
+  center.style.gridColumn = '2 / 14';
   updateBoardCenter(state, center);
   boardEl.appendChild(center);
 }
@@ -365,7 +364,7 @@ function makeCenterBtn(label, type, fn) {
 }
 
 const BOARD_ROWS = 10;
-const BOARD_COLS = 20;
+const BOARD_COLS = 14;
 
 function buildTileClass(tile, row, col) {
   let cls = `tile tile-${tile.type}`;
