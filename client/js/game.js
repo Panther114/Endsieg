@@ -416,7 +416,7 @@ function showTileInfo(tileId) {
     html += `<table class="rent-table"><thead><tr><th>Level</th><th>Rent</th></tr></thead><tbody>`;
     const labels = ['Base', '1 House', '2 Houses', '3 Houses', '4 Houses', 'Hotel'];
     tile.rent.forEach((r, i) => {
-      const active = ownerHouses === (i === 0 ? 0 : i);
+      const active = ownerHouses === i;
       html += `<tr${active ? ' class="rent-active"' : ''}><td>${labels[i] || i}</td><td>$${r}</td></tr>`;
     });
     html += `</tbody></table>`;
