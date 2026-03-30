@@ -1,0 +1,304 @@
+/* =====================================================================
+   board.css — Board grid, tiles, tokens, houses for Endsieg
+   ===================================================================== */
+
+/* ── BOARD CONTAINER ── */
+.board {
+  display: grid;
+  grid-template-columns: 80px repeat(9, 48px) 80px;
+  grid-template-rows:    80px repeat(9, 48px) 80px;
+  width:  660px;
+  height: 660px;
+  border: 3px solid #555;
+  border-radius: 4px;
+  background: #d4edda;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,0.7);
+  flex-shrink: 0;
+}
+
+/* Scale board for smaller screens */
+@media (max-width: 900px) {
+  .board {
+    transform: scale(0.82);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 700px) {
+  .board {
+    transform: scale(0.55);
+    transform-origin: top center;
+  }
+}
+
+/* ── BASE TILE ── */
+.tile {
+  border: 1px solid #888;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 7px;
+  font-family: 'Open Sans', sans-serif;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: #f5f5e8;
+  color: #222;
+  padding: 2px;
+  transition: box-shadow 0.15s;
+}
+
+.tile:hover { box-shadow: inset 0 0 0 2px rgba(241,196,15,0.7); z-index: 2; }
+
+/* ── COLOR BAND ── */
+.color-band {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 22%;
+}
+
+/* Bottom tiles (row 11): band at top */
+.tile-bottom .color-band { top: 0; bottom: auto; height: 22%; }
+
+/* Top tiles (row 1): band at bottom */
+.tile-top    .color-band { top: auto; bottom: 0; height: 22%; }
+
+/* Left tiles (col 1): band on right */
+.tile-left   .color-band { top: 0; left: auto; right: 0; width: 22%; height: 100%; }
+
+/* Right tiles (col 11): band on left */
+.tile-right  .color-band { top: 0; left: 0; right: auto; width: 22%; height: 100%; }
+
+/* Property group colors */
+.band-brown  { background: #955436; }
+.band-cyan   { background: #aae0fa; }
+.band-pink   { background: #d93a96; }
+.band-orange { background: #f7941d; }
+.band-red    { background: #ed1b24; }
+.band-yellow { background: #fef200; }
+.band-green  { background: #1fb25a; }
+.band-blue   { background: #0072bb; }
+
+/* ── TILE CONTENT ── */
+.tile-name {
+  font-size: 6.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0 1px;
+  word-break: break-word;
+  hyphens: auto;
+  z-index: 1;
+}
+
+.tile-price {
+  font-size: 6px;
+  color: #555;
+  z-index: 1;
+}
+
+/* ── CORNER TILES ── */
+.tile-corner {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'Cinzel', serif;
+  justify-content: center;
+  background: #e8f5e9;
+}
+
+.tile-corner .corner-icon {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.tile-corner .corner-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── SIDE TILE ROTATIONS ── */
+.tile-left {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  justify-content: center;
+}
+
+.tile-right {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  justify-content: center;
+}
+
+/* ── SPECIAL TILES ── */
+.tile-go        { background: #fffde7; }
+.tile-jail      { background: #fff3e0; }
+.tile-go_to_jail{ background: #fce4ec; }
+.tile-free_parking { background: #e8f5e9; }
+.tile-chance    { background: #fff9c4; }
+.tile-chest     { background: #e3f2fd; }
+.tile-tax       { background: #fbe9e7; }
+.tile-railroad  { background: #f5f5f5; }
+.tile-utility   { background: #e8eaf6; }
+
+/* ── OWNERSHIP OVERLAY ── */
+.owner-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.22;
+}
+
+/* ── HOUSES / HOTELS ── */
+.houses-container {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  display: flex;
+  gap: 1px;
+  flex-wrap: wrap;
+  max-width: 30px;
+  z-index: 2;
+}
+
+.house-sq {
+  width: 6px; height: 6px;
+  background: #2ecc71;
+  border: 0.5px solid #1a8a4a;
+}
+
+.hotel-sq {
+  width: 8px; height: 6px;
+  background: #e74c3c;
+  border: 0.5px solid #a93226;
+}
+
+/* ── PLAYER TOKENS ── */
+.tokens-container {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  z-index: 5;
+  max-width: 40px;
+}
+
+.player-token {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+/* ── CENTER AREA ── */
+.board-center {
+  grid-column: 2 / 11;
+  grid-row: 2 / 11;
+  background: #d4edda;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+}
+
+.center-title {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 22px;
+  color: #1a472a;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+.center-subtitle {
+  font-size: 8px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.2em;
+  color: #2d6a4f;
+  text-transform: uppercase;
+}
+
+/* ── DICE DISPLAY ── */
+.dice-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.die {
+  width: 36px; height: 36px;
+  background: white;
+  border: 2px solid #333;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.die.rolling {
+  animation: roll-anim 0.4s ease-out;
+}
+
+@keyframes roll-anim {
+  0%   { transform: rotate(0deg) scale(1); }
+  25%  { transform: rotate(15deg) scale(1.1); }
+  50%  { transform: rotate(-10deg) scale(0.95); }
+  75%  { transform: rotate(5deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* ── CURRENT PLAYER INFO ── */
+.center-player-info {
+  font-size: 9px;
+  font-family: 'Open Sans', sans-serif;
+  color: #333;
+  text-align: center;
+  max-width: 280px;
+}
+
+.center-player-info strong {
+  font-size: 11px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ── ACTIVE TILE HIGHLIGHT ── */
+.tile.current-player-tile {
+  animation: tile-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tile-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(241,196,15,0.8); }
+  50%       { box-shadow: inset 0 0 0 3px rgba(241,196,15,1), 0 0 8px rgba(241,196,15,0.5); }
+}
+
+/* ── PURCHASABLE HIGHLIGHT ── */
+.tile.purchasable {
+  box-shadow: inset 0 0 0 2px rgba(46,204,113,0.9);
+}
+
+/* ── SOLD TILE ── */
+.tile.owned {
+  /* owner overlay handles coloring */
+}
