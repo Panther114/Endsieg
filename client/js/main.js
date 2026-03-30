@@ -35,12 +35,27 @@ function showError(msg) {
 
 function copyRoomCode() {
   if (!myRoomId) return;
-  navigator.clipboard.writeText(myRoomId).then(() => {
-    const el = document.getElementById('roomCode-display');
-    const orig = el.textContent;
+  const el = document.getElementById('roomCode-display');
+  const orig = el.textContent;
+  const showCopied = () => {
     el.textContent = 'COPIED!';
     setTimeout(() => { el.textContent = orig; }, 1200);
-  }).catch(() => {});
+  };
+  const fallback = () => {
+    // execCommand is deprecated but serves as a fallback for non-HTTPS environments
+    const ta = document.createElement('textarea');
+    ta.value = myRoomId;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy'); // eslint-disable-line no-undef
+    document.body.removeChild(ta);
+    showCopied();
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(myRoomId).then(showCopied).catch(fallback);
+  } else {
+    fallback();
+  }
 }
 window.copyRoomCode = copyRoomCode;
 

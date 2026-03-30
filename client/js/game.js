@@ -98,7 +98,10 @@ socket.on('error', ({ message }) => {
 });
 
 socket.on('player_left', ({ playerName }) => {
-  showToast(`${playerName} has left the game.`);
+  const myName = sessionStorage.getItem('endsieg_playerName') || '';
+  if (playerName !== myName) {
+    showToast(`${playerName} has left the game.`);
+  }
 });
 
 // ── HIDE LOADING ───────────────────────────────────────────────────
