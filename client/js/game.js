@@ -32,29 +32,20 @@ const loadingTimeout = setTimeout(() => {
   }
 }, 8000);
 
-// ── DICE FACES ─────────────────────────────────────────────────────
-const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+// ── DICE FACES removed — using numeric display ──────────────────────
 
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
-// Maps tile id -> [gridRow, gridCol] (1-indexed, 11x11 grid)
+// Maps tile id -> [gridRow, gridCol] (1-indexed, 16x16 grid)
 function buildPositionMap() {
   const pos = {};
-  // Bottom row (row 11), tiles 0-10, right to left
-  for (let i = 0; i <= 10; i++) {
-    pos[i] = [11, 11 - i];
-  }
-  // Left column (col 1), tiles 11-19, bottom to top
-  for (let i = 11; i <= 19; i++) {
-    pos[i] = [11 - (i - 10), 1];
-  }
-  // Top row (row 1), tiles 20-30, left to right
-  for (let i = 20; i <= 30; i++) {
-    pos[i] = [1, i - 19];
-  }
-  // Right column (col 11), tiles 31-39, top to bottom
-  for (let i = 31; i <= 39; i++) {
-    pos[i] = [i - 29, 11];
-  }
+  // Bottom row (row 16): tiles 0-15, right to left
+  for (let i = 0; i <= 15; i++) pos[i] = [16, 16 - i];
+  // Left col (col 1): tiles 16-28, bottom to top (excluding corners)
+  for (let i = 16; i <= 28; i++) pos[i] = [15 - (i - 16), 1];
+  // Top row (row 1): tiles 29-44, left to right
+  for (let i = 29; i <= 44; i++) pos[i] = [1, i - 28];
+  // Right col (col 16): tiles 45-55, top to bottom (excluding bottom-right corner which is tile 0)
+  for (let i = 45; i <= 55; i++) pos[i] = [i - 43, 16];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -142,22 +133,45 @@ function renderBoard(state) {
     el.style.gridRow    = row;
     el.style.gridColumn = col;
 
-    // Color band
+    // Color band (with house/hotel icons)
+    const houseOwner = state.players.find(p => p.id === (state.propertyOwners && state.propertyOwners[tile.id]));
     if (tile.color) {
       const band = document.createElement('div');
       band.className = `color-band band-${tile.color}`;
+
+      // Add house/hotel icons to the band
+      const houseCount = (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) || 0;
+      if (houseCount > 0) {
+        band.style.display = 'flex';
+        band.style.flexDirection = 'column';
+        band.style.alignItems = 'center';
+        band.style.justifyContent = 'flex-end';
+        band.style.gap = '1px';
+        band.style.padding = '1px';
+        if (houseCount === 5) {
+          const hotel = document.createElement('span');
+          hotel.className = 'hotel-icon';
+          hotel.textContent = '🏨';
+          band.appendChild(hotel);
+        } else {
+          for (let h = 0; h < houseCount; h++) {
+            const house = document.createElement('span');
+            house.className = 'house-icon';
+            house.textContent = '🏠';
+            band.appendChild(house);
+          }
+        }
+      }
       el.appendChild(band);
     }
 
-    // Owner overlay
+    // Owner outline (replaces overlay)
     const ownerId = state.propertyOwners && state.propertyOwners[tile.id];
     if (ownerId) {
       const owner = state.players.find(p => p.id === ownerId);
       if (owner) {
-        const overlay = document.createElement('div');
-        overlay.className = 'owner-overlay';
-        overlay.style.background = owner.color;
-        el.appendChild(overlay);
+        el.style.outline = `3px solid ${owner.color}`;
+        el.style.outlineOffset = '-2px';
       }
     }
 
@@ -182,26 +196,6 @@ function renderBoard(state) {
         cost.textContent = `Pay $${tile.cost}`;
         el.appendChild(cost);
       }
-    }
-
-    // Houses / hotel
-    const houseOwner = state.players.find(p => p.id === ownerId);
-    if (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) {
-      const count = houseOwner.houses[tile.id];
-      const hc = document.createElement('div');
-      hc.className = 'houses-container';
-      if (count === 5) {
-        const hotel = document.createElement('div');
-        hotel.className = 'hotel-sq';
-        hc.appendChild(hotel);
-      } else {
-        for (let i = 0; i < count; i++) {
-          const h = document.createElement('div');
-          h.className = 'house-sq';
-          hc.appendChild(h);
-        }
-      }
-      el.appendChild(hc);
     }
 
     // Player tokens
@@ -243,8 +237,8 @@ function renderBoard(state) {
   const center = document.createElement('div');
   center.className = 'board-center-actions';
   center.id = 'boardCenterActions';
-  center.style.gridRow    = '2 / 11';
-  center.style.gridColumn = '2 / 11';
+  center.style.gridRow    = '2 / 16';
+  center.style.gridColumn = '2 / 16';
   updateBoardCenter(state, center);
   boardEl.appendChild(center);
 }
@@ -268,7 +262,7 @@ function updateBoardCenter(state, centerEl) {
 
   const sub = document.createElement('div');
   sub.className = 'center-subtitle';
-  sub.textContent = 'World Strategy';
+  sub.textContent = 'By Gavania';
   el.appendChild(sub);
 
   // Dice
@@ -278,7 +272,7 @@ function updateBoardCenter(state, centerEl) {
   if (state.lastRoll) {
     renderDice(state.lastRoll, diceContainer);
   } else {
-    diceContainer.innerHTML = '<div class="die">🎲</div><div class="die">🎲</div>';
+    diceContainer.innerHTML = '<div class="die">?</div><div class="die">?</div>';
   }
   el.appendChild(diceContainer);
 
@@ -344,15 +338,15 @@ function makeCenterBtn(label, type, fn) {
 function buildTileClass(tile, row, col) {
   let cls = `tile tile-${tile.type}`;
   if (isCorner(row, col)) cls += ' tile-corner';
-  else if (row === 11) cls += ' tile-bottom';
+  else if (row === 16) cls += ' tile-bottom';
   else if (row === 1)  cls += ' tile-top';
   else if (col === 1)  cls += ' tile-left';
-  else if (col === 11) cls += ' tile-right';
+  else if (col === 16) cls += ' tile-right';
   return cls;
 }
 
 function isCorner(row, col) {
-  return (row === 1 || row === 11) && (col === 1 || col === 11);
+  return (row === 1 || row === 16) && (col === 1 || col === 16);
 }
 
 function buildCornerContent(tile) {
@@ -376,7 +370,7 @@ function renderDice(roll, container) {
   roll.forEach(val => {
     const die = document.createElement('div');
     die.className = 'die rolling';
-    die.textContent = DICE_FACES[val] || val;
+    die.textContent = val;
     container.appendChild(die);
     setTimeout(() => die.classList.remove('rolling'), 500);
   });
