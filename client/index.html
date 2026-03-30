@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Endsieg — Multiplayer Board Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <div class="stars"></div>
+  <div id="lobby" class="container">
+    <header>
+      <h1 class="game-title">ENDSIEG</h1>
+      <p class="game-subtitle">Multiplayer Strategy Board Game</p>
+    </header>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="playerName">Your Name</label>
+        <input id="playerName" type="text" placeholder="Enter your name..." maxlength="16" autocomplete="off" />
+      </div>
+
+      <button class="btn btn-primary btn-large" onclick="createRoom()">
+        ⚔️ Create New Room
+      </button>
+
+      <div class="divider"><span>OR</span></div>
+
+      <div class="form-group">
+        <label for="roomCode">Room Code</label>
+        <input id="roomCode" type="text" placeholder="Enter 6-digit code..." maxlength="6"
+               style="text-transform:uppercase;letter-spacing:4px;text-align:center;" autocomplete="off" />
+      </div>
+
+      <button class="btn btn-secondary btn-large" onclick="joinRoom()">
+        🚀 Join Room
+      </button>
+    </div>
+
+    <div id="roomInfo" class="card room-info" style="display:none;">
+      <h2>Room Code</h2>
+      <div id="roomCode-display" class="room-code" onclick="copyRoomCode()" title="Click to copy"></div>
+      <p class="copy-hint">Click to copy</p>
+
+      <h3>Players</h3>
+      <ul id="playerList" class="player-list"></ul>
+
+      <div id="hostControls" style="display:none;">
+        <button class="btn btn-primary btn-large" onclick="startGame()">
+          ▶ Start Game
+        </button>
+        <p class="hint">You are the host. Start when everyone is ready.</p>
+      </div>
+      <div id="guestWait" style="display:none;">
+        <p class="hint waiting">⏳ Waiting for host to start the game...</p>
+      </div>
+    </div>
+
+    <div id="errorMsg" class="error-msg" style="display:none;"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

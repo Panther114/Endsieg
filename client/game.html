@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Endsieg — In Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/board.css" />
+</head>
+<body class="game-page">
+
+  <!-- GAME LAYOUT -->
+  <div id="gameLayout" class="game-layout" style="display:none;">
+
+    <!-- LEFT PANEL: Players -->
+    <aside id="leftPanel" class="panel panel-left">
+      <h2 class="panel-title">Players</h2>
+      <div id="playerCards" class="player-cards"></div>
+    </aside>
+
+    <!-- CENTER: Board -->
+    <main class="board-wrapper">
+      <div id="board" class="board"></div>
+    </main>
+
+    <!-- RIGHT PANEL: Log + Chat -->
+    <aside id="rightPanel" class="panel panel-right">
+      <h2 class="panel-title">Event Log</h2>
+      <div id="logPanel" class="log-panel"></div>
+
+      <h2 class="panel-title" style="margin-top:12px;">Chat</h2>
+      <div id="chatLog" class="chat-log"></div>
+      <div class="chat-input-row">
+        <input id="chatInput" type="text" placeholder="Say something..." maxlength="200" />
+        <button class="btn btn-small" onclick="sendChat()">Send</button>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button class="btn btn-secondary btn-small" onclick="openTradeModal()">🤝 Trade</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- BOTTOM ACTION BAR -->
+  <div id="actionBar" class="action-bar" style="display:none;">
+    <button id="btnRoll"    class="btn btn-action" onclick="rollDice()">🎲 Roll Dice</button>
+    <button id="btnBuy"     class="btn btn-action btn-buy" onclick="buyProperty()" style="display:none;">💰 Buy Property</button>
+    <button id="btnBuild"   class="btn btn-action btn-build" onclick="openBuildModal()" style="display:none;">🏠 Build House</button>
+    <button id="btnPayJail" class="btn btn-action btn-pay" onclick="payJail()" style="display:none;">🔓 Pay $50 (Jail)</button>
+    <button id="btnEnd"     class="btn btn-action btn-end" onclick="endTurn()" style="display:none;">✅ End Turn</button>
+    <div id="turnIndicator" class="turn-indicator"></div>
+  </div>
+
+  <!-- BUILD HOUSE MODAL -->
+  <div id="buildModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>Build House / Hotel</h3>
+      <p>Select a property to build on:</p>
+      <div id="buildOptions" class="build-options"></div>
+      <button class="btn btn-secondary" onclick="closeBuildModal()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- TRADE MODAL -->
+  <div id="tradeModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box trade-modal-box">
+      <h3>Propose Trade</h3>
+      <div class="trade-form">
+        <div>
+          <label>Trade with:</label>
+          <select id="tradeTarget"></select>
+        </div>
+        <div class="trade-sides">
+          <div class="trade-side">
+            <h4>You Offer</h4>
+            <label>Money: $<input id="tradeFromMoney" type="number" min="0" value="0" /></label>
+            <div id="tradeFromProps" class="trade-props"></div>
+          </div>
+          <div class="trade-side">
+            <h4>You Want</h4>
+            <label>Money: $<input id="tradeToMoney" type="number" min="0" value="0" /></label>
+            <div id="tradeToProps" class="trade-props"></div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" onclick="submitTrade()">Send Offer</button>
+          <button class="btn btn-secondary" onclick="closeTradeModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOMING TRADE MODAL -->
+  <div id="incomingTradeModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>Trade Offer Received</h3>
+      <div id="incomingTradeDetails"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" onclick="acceptTrade()">Accept</button>
+        <button class="btn btn-secondary" onclick="declineTrade()">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINNER OVERLAY -->
+  <div id="winnerOverlay" class="winner-overlay" style="display:none;">
+    <div class="winner-box">
+      <h1>🏆 VICTORY!</h1>
+      <h2 id="winnerName"></h2>
+      <p>has conquered all!</p>
+      <button class="btn btn-primary btn-large" onclick="window.location.href='/'">
+        Play Again
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-content">
+      <h1 class="game-title">ENDSIEG</h1>
+      <p>Connecting to server...</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
