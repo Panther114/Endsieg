@@ -93,7 +93,9 @@
   height: var(--tile-band-width); width: 100%;
 }
 
-/* Left column tiles: band on the RIGHT side (facing board interior) */
+/* Left column tiles: band on the RIGHT side (facing board interior).
+   No rotation is applied; right:0 directly places the band on the
+   right edge, which faces the board interior. */
 .tile-left .color-band {
   position: absolute;
   top: 0; bottom: 0;
@@ -128,7 +130,7 @@
   justify-content: center;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
-  font-size: clamp(5px, 0.6vw, 8px);
+  font-size: clamp(4px, 0.5vw, 7px);
   color: rgba(255,255,255,0.95);
   text-shadow: 0 1px 3px rgba(0,0,0,1);
   pointer-events: none;
@@ -139,7 +141,7 @@
 .tile-name {
   font-family: 'Rajdhani', 'Arial Narrow', sans-serif;
   font-weight: 700;
-  font-size: clamp(5px, 0.7vw, 9px);
+  font-size: clamp(4px, 0.6vw, 8px);
   line-height: 1.2;
   white-space: normal;
   word-break: break-word;
@@ -155,7 +157,7 @@
 .tile-price {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(4px, 0.6vw, 8px);
+  font-size: clamp(3px, 0.5vw, 7px);
   color: var(--accent-dim);
   z-index: 1;
 }
@@ -172,7 +174,7 @@
 }
 
 .tile-corner .corner-icon {
-  font-size: clamp(16px, 2.8vw, 28px);
+  font-size: clamp(14px, 2.4vw, 24px);
   display: block;
   filter: drop-shadow(0 0 6px var(--accent));
 }
@@ -180,7 +182,7 @@
 .tile-corner .corner-label {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(5px, 0.75vw, 9px);
+  font-size: clamp(4px, 0.65vw, 8px);
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -189,20 +191,26 @@
 }
 
 /* ── SIDE TILE TEXT ORIENTATION ── */
-/* Bottom tiles (row 10): text centered in non-band area */
+/* Bottom tiles (row 10): text centered in tile */
 .tile-bottom {
-  padding-top: var(--tile-band-width);
   justify-content: center;
   align-items: center;
   flex-direction: column;
 }
+/* Bottom tiles with color band: push content below the band */
+.tile-bottom.tile-has-band {
+  padding-top: var(--tile-band-width);
+}
 
-/* Top tiles (row 1): text centered in non-band area */
+/* Top tiles (row 1): text centered in tile */
 .tile-top {
-  padding-bottom: var(--tile-band-width);
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+/* Top tiles with color band: push content above the band */
+.tile-top.tile-has-band {
+  padding-bottom: var(--tile-band-width);
 }
 
 /* Left tiles (col 1): horizontal text centered, color band on right */
@@ -210,6 +218,9 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+/* Left tiles with color band: push content away from the band */
+.tile-left.tile-has-band {
   padding-right: var(--tile-band-width);
 }
 
@@ -218,13 +229,16 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+/* Right tiles with color band: push content away from the band */
+.tile-right.tile-has-band {
   padding-left: var(--tile-band-width);
 }
 
 /* Smaller font for narrow left/right tile names to prevent overflow */
 .tile-left .tile-name,
 .tile-right .tile-name {
-  font-size: clamp(7px, 0.75vw, 9px);
+  font-size: clamp(6px, 0.65vw, 8px);
   line-height: 1.2;
   word-break: break-word;
   text-align: center;

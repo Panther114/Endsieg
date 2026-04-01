@@ -49,16 +49,17 @@ const loadingTimeout = setTimeout(() => {
 
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
 // Maps tile id -> [gridRow, gridCol] (1-indexed, 14x10 grid)
+// Layout matches boardConfig.json: GO at bottom-right, counter-clockwise traversal
 function buildPositionMap() {
   const pos = {};
-  // Top row (row 1): tiles 0-13, left to right (col 1 to 14)
-  for (let i = 0; i <= 13; i++) pos[i] = [1, i + 1];
-  // Right col (col 14): tiles 14-21, row 2 to 9
-  for (let i = 14; i <= 21; i++) pos[i] = [i - 12, 14];
-  // Bottom row (row 10): tiles 22-35, right to left (col 14 down to 1)
-  for (let i = 22; i <= 35; i++) pos[i] = [10, 14 - (i - 22)];
-  // Left col (col 1): tiles 36-43, row 9 down to 2
-  for (let i = 36; i <= 43; i++) pos[i] = [9 - (i - 36), 1];
+  // Bottom row (row 10): tiles 0–13, col 14→1 (right to left)
+  for (let i = 0; i <= 13; i++) pos[i] = [10, 14 - i];
+  // Left col (col 1): tiles 14–21, row 9→2
+  for (let i = 14; i <= 21; i++) pos[i] = [23 - i, 1];
+  // Top row (row 1): tiles 22–35, col 1→14
+  for (let i = 22; i <= 35; i++) pos[i] = [1, i - 21];
+  // Right col (col 14): tiles 36–43, row 2→9
+  for (let i = 36; i <= 43; i++) pos[i] = [i - 34, 14];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -146,7 +147,7 @@ function renderBoard(state) {
     el.style.gridRow    = row;
     el.style.gridColumn = col;
 
-    // Color band (with house/hotel icons and price)
+    // Color band (with house/hotel icons and price) — property tiles only
     const houseOwner = state.players.find(p => p.id === (state.propertyOwners && state.propertyOwners[tile.id]));
     if (tile.type === 'property' && tile.color) {
       const band = document.createElement('div');
@@ -206,14 +207,15 @@ function renderBoard(state) {
       name.textContent = tile.name;
       el.appendChild(name);
 
-      // Only show price outside band for non-property tiles (tax cost, etc.)
-      if (!tile.color && tile.price) {
+      // Price tag for railroad and utility tiles only (no color band)
+      if ((tile.type === 'railroad' || tile.type === 'utility') && tile.price) {
         const price = document.createElement('div');
         price.className = 'tile-price';
         price.textContent = `$${tile.price}`;
         el.appendChild(price);
       }
-      if (tile.cost) {
+      // Pay cost label for tax tiles only
+      if (tile.type === 'tax' && tile.cost) {
         const cost = document.createElement('div');
         cost.className = 'tile-price';
         cost.textContent = `Pay $${tile.cost}`;
@@ -376,6 +378,7 @@ function buildTileClass(tile, row, col) {
   else if (row === 1)           cls += ' tile-top';
   else if (col === 1)           cls += ' tile-left';
   else if (col === BOARD_COLS)  cls += ' tile-right';
+  if (tile.type === 'property' && tile.color) cls += ' tile-has-band';
   return cls;
 }
 

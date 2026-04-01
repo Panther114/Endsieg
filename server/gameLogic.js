@@ -1,5 +1,7 @@
 'use strict';
 
+const fs   = require('fs');
+const path = require('path');
 const BOARD = require('./boardData');
 
 const PLAYER_COLORS = [
@@ -13,7 +15,18 @@ const PLAYER_COLORS = [
   '#4527A0',  // Deep Indigo
 ];
 
-const CHANCE_CARDS = [
+// ── Load configurable card decks from server/cardsConfig.json ──────
+let _cardsConfig = {};
+try {
+  const raw = fs.readFileSync(path.join(__dirname, 'cardsConfig.json'), 'utf8');
+  _cardsConfig = JSON.parse(raw);
+} catch (err) {
+  if (err.code !== 'ENOENT') {
+    console.warn('[gameLogic] Could not load cardsConfig.json:', err.message);
+  }
+}
+
+const _defaultChanceCards = [
   { text: 'Advance to GO. Collect $200.', action: 'advance_to', target: 0 },
   { text: 'Go to Jail. Go directly to Jail.', action: 'go_to_jail' },
   { text: 'Bank pays you dividend of $50.', action: 'collect', amount: 50 },
@@ -24,7 +37,7 @@ const CHANCE_CARDS = [
   { text: 'Pay each player $50.', action: 'pay_each', amount: 50 }
 ];
 
-const CHEST_CARDS = [
+const _defaultChestCards = [
   { text: 'Bank error in your favor. Collect $200.', action: 'collect', amount: 200 },
   { text: "Doctor's fee. Pay $50.", action: 'pay', amount: 50 },
   { text: 'Pay school tax of $150.', action: 'pay', amount: 150 },
@@ -34,6 +47,14 @@ const CHEST_CARDS = [
   { text: 'Income tax refund. Collect $20.', action: 'collect', amount: 20 },
   { text: 'Life insurance matures. Collect $100.', action: 'collect', amount: 100 }
 ];
+
+const CHANCE_CARDS = (Array.isArray(_cardsConfig.chanceCards) && _cardsConfig.chanceCards.length > 0)
+  ? _cardsConfig.chanceCards
+  : _defaultChanceCards;
+
+const CHEST_CARDS = (Array.isArray(_cardsConfig.chestCards) && _cardsConfig.chestCards.length > 0)
+  ? _cardsConfig.chestCards
+  : _defaultChestCards;
 
 function shuffle(arr) {
   const a = arr.slice();

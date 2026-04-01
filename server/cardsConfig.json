@@ -1,0 +1,29 @@
+{
+  "_comment": "Configurable Chance and Community Chest card decks for Endsieg. Remove or replace entries freely. Supported actions are listed in _schema.",
+  "_schema": {
+    "text":   "Message displayed in the event log when the card is drawn.",
+    "action": "Card effect: 'collect' | 'pay' | 'advance_to' | 'go_to_jail' | 'move_back' | 'nearest_railroad' | 'jail_free' | 'pay_each' | 'collect_each'",
+    "amount": "Currency amount — used with 'collect', 'pay', 'pay_each', 'collect_each'.",
+    "target": "Tile id to move to — used with 'advance_to'."
+  },
+  "chanceCards": [
+    { "text": "Advance to GO. Collect $200.",        "action": "advance_to",       "target": 0   },
+    { "text": "Go to Jail. Go directly to Jail.",    "action": "go_to_jail"                      },
+    { "text": "Bank pays you dividend of $50.",      "action": "collect",          "amount": 50  },
+    { "text": "Pay poor tax of $15.",                "action": "pay",              "amount": 15  },
+    { "text": "Go back 3 spaces.",                   "action": "move_back",        "amount": 3   },
+    { "text": "Advance to nearest Railroad.",        "action": "nearest_railroad"                },
+    { "text": "Get Out of Jail Free.",               "action": "jail_free"                       },
+    { "text": "Pay each player $50.",                "action": "pay_each",         "amount": 50  }
+  ],
+  "chestCards": [
+    { "text": "Bank error in your favor. Collect $200.", "action": "collect",      "amount": 200 },
+    { "text": "Doctor's fee. Pay $50.",                  "action": "pay",          "amount": 50  },
+    { "text": "Pay school tax of $150.",                 "action": "pay",          "amount": 150 },
+    { "text": "Receive holiday fund maturity. Collect $100.", "action": "collect", "amount": 100 },
+    { "text": "Go to Jail.",                             "action": "go_to_jail"                  },
+    { "text": "Collect $10 from every player.",          "action": "collect_each", "amount": 10  },
+    { "text": "Income tax refund. Collect $20.",         "action": "collect",      "amount": 20  },
+    { "text": "Life insurance matures. Collect $100.",   "action": "collect",      "amount": 100 }
+  ]
+}
