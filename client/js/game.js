@@ -544,7 +544,7 @@ function renderLog(log) {
   entries.forEach((entry, i) => {
     const div = document.createElement('div');
     div.className = 'log-entry';
-    const opacity = 0.25 + (i / (entries.length - 1 || 1)) * 0.75;
+    const opacity = 0.25 + (i / Math.max(entries.length - 1, 1)) * 0.75;
     div.style.opacity = opacity.toFixed(2);
     if (typeof entry === 'string') {
       div.textContent = entry;
