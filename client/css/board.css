@@ -60,11 +60,11 @@
   z-index: 10;
 }
 
-/* Preserve rotation transform on hover for left tiles */
+/* Left tiles have no rotation — hover just scales like all other tiles */
 .tile-left:hover {
   background: #1a1e2a;
   box-shadow: inset 0 0 0 1px var(--accent), 0 0 8px rgba(201,168,76,0.2);
-  transform: rotate(180deg) scale(1.02);
+  transform: scale(1.02);
   z-index: 10;
 }
 
@@ -92,12 +92,11 @@
   height: var(--tile-band-width); width: 100%;
 }
 
-/* Left column tiles: band on the RIGHT side visually (facing board interior) */
-/* Due to parent transform: rotate(180deg), left:0 in local coords = right visually */
+/* Left column tiles: band on the RIGHT side (facing board interior) */
 .tile-left .color-band {
   position: absolute;
   top: 0; bottom: 0;
-  left: 0; right: auto;
+  right: 0; left: auto;
   width: var(--tile-band-width); height: 100%;
 }
 
@@ -205,31 +204,35 @@
   flex-direction: column;
 }
 
-/* Left tiles (col 1): read bottom-to-top, text centered away from band */
+/* Left tiles (col 1): horizontal text centered, color band on right */
 .tile-left {
-  transform: rotate(180deg);
   justify-content: center;
   align-items: center;
-  padding-left: var(--tile-band-width);
+  flex-direction: column;
+  padding-right: var(--tile-band-width);
 }
 
-/* Right tiles (col 14): read top-to-bottom, text centered away from band */
+/* Right tiles (col 14): horizontal text centered, color band on left */
 .tile-right {
-  transform: none;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   padding-left: var(--tile-band-width);
 }
 
-/* Vertical text on left/right tiles — applied only to text children so flex axes stay correct */
+/* Smaller font for narrow left/right tile names to prevent overflow */
 .tile-left .tile-name,
-.tile-left .tile-price {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+.tile-right .tile-name {
+  font-size: clamp(7px, 0.75vw, 9px);
+  line-height: 1.2;
+  word-break: break-word;
+  text-align: center;
+  width: 100%;
 }
 
-.tile-right .tile-name,
-.tile-right .tile-price {
+/* Rotate price text in vertical bands so it fits the narrow strip */
+.tile-left .color-band .tile-price-band,
+.tile-right .color-band .tile-price-band {
   writing-mode: vertical-lr;
   text-orientation: mixed;
 }
