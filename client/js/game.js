@@ -49,17 +49,21 @@ const loadingTimeout = setTimeout(() => {
 
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
 // Maps tile id -> [gridRow, gridCol] (1-indexed, 14x10 grid)
-// Layout matches boardConfig.json: GO at bottom-right, counter-clockwise traversal
+// Matches server/boardData.js clockwise layout — GO at top-left corner:
+//   Top row   (row  1): ids  0–13,  col 1→14  (left to right)
+//   Right col (col 14): ids 14–21,  row 2→9
+//   Bottom row (row 10): ids 22–35, col 14→1  (right to left)
+//   Left col  (col  1): ids 36–43,  row 9→2
 function buildPositionMap() {
   const pos = {};
-  // Bottom row (row 10): tiles 0–13, col 14→1 (right to left)
-  for (let i = 0; i <= 13; i++) pos[i] = [10, 14 - i];
-  // Left col (col 1): tiles 14–21, row 9→2
-  for (let i = 14; i <= 21; i++) pos[i] = [23 - i, 1];
-  // Top row (row 1): tiles 22–35, col 1→14
-  for (let i = 22; i <= 35; i++) pos[i] = [1, i - 21];
-  // Right col (col 14): tiles 36–43, row 2→9
-  for (let i = 36; i <= 43; i++) pos[i] = [i - 34, 14];
+  // Top row (row 1): tiles 0–13, col 1→14 (left to right)
+  for (let i = 0; i <= 13; i++) pos[i] = [1, i + 1];
+  // Right col (col 14): tiles 14–21, row 2→9
+  for (let i = 14; i <= 21; i++) pos[i] = [i - 12, 14];
+  // Bottom row (row 10): tiles 22–35, col 14→1 (right to left)
+  for (let i = 22; i <= 35; i++) pos[i] = [10, 36 - i];
+  // Left col (col 1): tiles 36–43, row 9→2
+  for (let i = 36; i <= 43; i++) pos[i] = [45 - i, 1];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
