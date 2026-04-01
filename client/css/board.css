@@ -60,6 +60,14 @@
   z-index: 10;
 }
 
+/* Preserve rotation transform on hover for left tiles */
+.tile-left:hover {
+  background: #1a1e2a;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 8px rgba(201,168,76,0.2);
+  transform: rotate(180deg) scale(1.02);
+  z-index: 10;
+}
+
 /* ── COLOR BAND ── */
 .color-band {
   position: absolute;
@@ -199,8 +207,6 @@
 
 /* Left tiles (col 1): read bottom-to-top, text centered away from band */
 .tile-left {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
   transform: rotate(180deg);
   justify-content: center;
   align-items: center;
@@ -209,12 +215,23 @@
 
 /* Right tiles (col 14): read top-to-bottom, text centered away from band */
 .tile-right {
-  writing-mode: vertical-lr;
-  text-orientation: mixed;
   transform: none;
   justify-content: center;
   align-items: center;
   padding-left: var(--tile-band-width);
+}
+
+/* Vertical text on left/right tiles — applied only to text children so flex axes stay correct */
+.tile-left .tile-name,
+.tile-left .tile-price {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.tile-right .tile-name,
+.tile-right .tile-price {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
 }
 
 /* ── SPECIAL TILE TYPES ── */
