@@ -108,6 +108,12 @@ header { text-align: center; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: 0 0 20px rgba(201,168,76,0.1);
 }
 
 /* ── FORM ── */
@@ -144,6 +150,7 @@ input[type="text"]:focus,
 input[type="number"]:focus,
 select:focus {
   border-color: var(--accent);
+  border-left: 3px solid var(--accent);
   box-shadow: 0 0 0 2px rgba(201,168,76,0.25);
 }
 
@@ -252,10 +259,13 @@ input::placeholder { color: rgba(255,255,255,0.3); }
   text-shadow: 0 0 12px rgba(201,168,76,0.5);
   cursor: pointer;
   user-select: all;
-  transition: transform 0.1s;
+  transition: transform 0.1s, text-shadow 0.2s;
 }
 
-.room-code:hover { transform: scale(1.02); }
+.room-code:hover {
+  transform: scale(1.02);
+  text-shadow: 0 0 20px rgba(201,168,76,0.8), 0 0 40px rgba(201,168,76,0.4);
+}
 
 .copy-hint {
   font-size: 0.68rem;
@@ -370,6 +380,7 @@ body.game-page {
 
 .player-card.active {
   border-color: var(--accent);
+  border-left: 3px solid var(--accent);
   background: rgba(201,168,76,0.08);
   box-shadow: 0 0 12px rgba(201,168,76,0.15);
 }
@@ -438,6 +449,7 @@ body.game-page {
 
 .log-panel p:first-child {
   color: var(--text-light);
+  font-weight: 600;
 }
 
 /* ── CHAT ── */
@@ -471,7 +483,8 @@ body.game-page {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -694,10 +707,10 @@ body.game-page {
 }
 
 /* ── SCROLLBARS ── */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 4px; background: transparent; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.6); }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
@@ -751,25 +764,25 @@ body.game-page {
 }
 
 .color-swatch {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 3px solid transparent;
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.15s ease;
   flex-shrink: 0;
   outline: none;
   padding: 0;
 }
 
 .color-swatch:hover:not(:disabled) {
-  transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+  border-color: rgba(255,255,255,0.6);
+  transform: scale(1.05);
 }
 
 .color-swatch.selected {
   border-color: #fff;
-  box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 10px rgba(201,168,76,0.5);
   transform: scale(1.1);
 }
 

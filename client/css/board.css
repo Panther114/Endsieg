@@ -17,6 +17,7 @@
   --glow:       rgba(201, 168, 76, 0.15);
 
   --corner-size: clamp(50px, 8vw, 90px);
+  --tile-band-width: 22%;
 }
 
 /* ── BOARD CONTAINER (14 cols x 10 rows, fills wrapper) ── */
@@ -27,9 +28,9 @@
   width: 100%;
   height: 100%;
   background: #0e1218;
-  border: 2px solid var(--accent);
+  border: 2px solid rgba(201,168,76,0.6);
   border-radius: 4px;
-  box-shadow: 0 0 60px rgba(201,168,76,0.2), inset 0 0 30px rgba(0,0,0,0.5);
+  box-shadow: 0 0 80px rgba(201,168,76,0.25), 0 0 30px rgba(201,168,76,0.1), inset 0 0 40px rgba(0,0,0,0.6);
   position: relative;
 }
 
@@ -40,7 +41,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   font-family: 'Rajdhani', 'Arial Narrow', sans-serif;
   font-weight: 600;
   text-align: center;
@@ -49,20 +50,22 @@
   overflow: hidden;
   color: var(--text-light);
   padding: 2px;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
 }
 
 .tile:hover {
   background: #1a1e2a;
-  box-shadow: inset 0 0 0 1px var(--accent);
-  z-index: 2;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 8px rgba(201,168,76,0.2);
+  transform: scale(1.02);
+  z-index: 10;
 }
 
 /* ── COLOR BAND ── */
 .color-band {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 22%;
+  height: var(--tile-band-width);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
 }
 
 /* Bottom tiles (row 10): band at top, facing interior */
@@ -70,7 +73,7 @@
   position: absolute;
   top: 0; bottom: auto;
   left: 0; right: 0;
-  height: 22%; width: 100%;
+  height: var(--tile-band-width); width: 100%;
 }
 
 /* Top tiles (row 1): band at bottom, facing interior */
@@ -78,15 +81,16 @@
   position: absolute;
   bottom: 0; top: auto;
   left: 0; right: 0;
-  height: 22%; width: 100%;
+  height: var(--tile-band-width); width: 100%;
 }
 
-/* Left column tiles: band on the RIGHT side (facing board interior) */
+/* Left column tiles: band on the RIGHT side visually (facing board interior) */
+/* Due to parent transform: rotate(180deg), left:0 in local coords = right visually */
 .tile-left .color-band {
   position: absolute;
   top: 0; bottom: 0;
-  right: 0; left: auto;
-  width: 22%; height: 100%;
+  left: 0; right: auto;
+  width: var(--tile-band-width); height: 100%;
 }
 
 /* Right column tiles: band on the LEFT side (facing board interior) */
@@ -94,18 +98,18 @@
   position: absolute;
   top: 0; bottom: 0;
   left: 0; right: auto;
-  width: 22%; height: 100%;
+  width: var(--tile-band-width); height: 100%;
 }
 
 /* Property group colors — vivid gradients on dark background */
-.band-brown    { background: linear-gradient(135deg, #8B4513, #6b3410); }
-.band-cyan     { background: linear-gradient(135deg, #00BCD4, #0097a7); }
-.band-pink     { background: linear-gradient(135deg, #E91E63, #c2185b); }
-.band-orange   { background: linear-gradient(135deg, #FF9800, #f57c00); }
-.band-red      { background: linear-gradient(135deg, #F44336, #c62828); }
-.band-yellow   { background: linear-gradient(135deg, #FFC107, #ff8f00); }
-.band-green    { background: linear-gradient(135deg, #4CAF50, #388e3c); }
-.band-darkblue { background: linear-gradient(135deg, #3F51B5, #1a237e); }
+.band-brown    { background: linear-gradient(135deg, #a0522d, #7a3e1e); }
+.band-cyan     { background: linear-gradient(135deg, #00d4ee, #0097a7); }
+.band-pink     { background: linear-gradient(135deg, #f50057, #c2185b); }
+.band-orange   { background: linear-gradient(135deg, #ffa726, #f57c00); }
+.band-red      { background: linear-gradient(135deg, #f44336, #b71c1c); }
+.band-yellow   { background: linear-gradient(135deg, #ffca28, #ff8f00); }
+.band-green    { background: linear-gradient(135deg, #66bb6a, #2e7d32); }
+.band-darkblue { background: linear-gradient(135deg, #5c6bc0, #1a237e); }
 
 /* ── PRICE INSIDE BAND ── */
 .tile-price-band {
@@ -127,8 +131,8 @@
 .tile-name {
   font-family: 'Rajdhani', 'Arial Narrow', sans-serif;
   font-weight: 700;
-  font-size: clamp(5px, 0.65vw, 8px);
-  line-height: 1.1;
+  font-size: clamp(6px, 0.9vw, 11px);
+  line-height: 1.2;
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -143,14 +147,14 @@
 .tile-price {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(4px, 0.55vw, 7px);
+  font-size: clamp(5px, 0.7vw, 9px);
   color: var(--accent-dim);
   z-index: 1;
 }
 
 /* ── CORNER TILES ── */
 .tile-corner {
-  background: linear-gradient(135deg, #0e1118 60%, #1a1520);
+  background: linear-gradient(135deg, #16181f 0%, #0e1118 60%, #1a1520 100%);
   border: 1px solid rgba(201,168,76,0.3);
   display: flex;
   flex-direction: column;
@@ -160,7 +164,7 @@
 }
 
 .tile-corner .corner-icon {
-  font-size: clamp(18px, 3vw, 32px);
+  font-size: clamp(20px, 3.5vw, 36px);
   display: block;
   filter: drop-shadow(0 0 6px var(--accent));
 }
@@ -177,22 +181,40 @@
 }
 
 /* ── SIDE TILE TEXT ORIENTATION ── */
-/* Left tiles (col 1): read bottom-to-top, text near band (right = interior) */
+/* Bottom tiles (row 10): text centered in non-band area */
+.tile-bottom {
+  padding-top: var(--tile-band-width);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Top tiles (row 1): text centered in non-band area */
+.tile-top {
+  padding-bottom: var(--tile-band-width);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Left tiles (col 1): read bottom-to-top, text centered away from band */
 .tile-left {
   writing-mode: vertical-rl;
   text-orientation: mixed;
   transform: rotate(180deg);
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
+  padding-left: var(--tile-band-width);
 }
 
-/* Right tiles (col 20): read top-to-bottom, text near band (left = interior) */
+/* Right tiles (col 14): read top-to-bottom, text centered away from band */
 .tile-right {
   writing-mode: vertical-lr;
   text-orientation: mixed;
   transform: none;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
+  padding-left: var(--tile-band-width);
 }
 
 /* ── SPECIAL TILE TYPES ── */
@@ -226,10 +248,10 @@
 }
 
 .player-token {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.9);
+  border: 2px solid rgba(255,255,255,0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -237,7 +259,7 @@
   font-weight: 900;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,1);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.8), 0 0 8px var(--token-color, currentColor);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 12px var(--token-color, currentColor);
   flex-shrink: 0;
 }
 
@@ -276,10 +298,11 @@
 .turn-indicator-bar {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 3px;
+  height: 4px;
   transition: background 0.4s;
-  opacity: 0.8;
+  opacity: 0.9;
   z-index: 2;
+  box-shadow: 0 0 8px currentColor;
 }
 
 /* ── CENTER TITLE ── */
@@ -317,28 +340,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: #1a1e2a;
   color: var(--accent);
   border: 2px solid var(--accent);
   border-radius: 6px;
   font-family: 'Cinzel', serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 900;
   box-shadow: 0 0 10px rgba(201,168,76,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .die.rolling {
-  animation: roll-anim 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: roll-anim 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes roll-anim {
-  0%   { transform: rotate(0deg)   scale(1); }
-  25%  { transform: rotate(15deg)  scale(1.1); }
-  50%  { transform: rotate(-10deg) scale(0.95); }
-  75%  { transform: rotate(5deg)   scale(1.05); }
-  100% { transform: rotate(0deg)   scale(1); }
+  0%   { transform: rotate(0deg)   scale(1);    box-shadow: 0 0 10px rgba(201,168,76,0.3); }
+  20%  { transform: rotate(20deg)  scale(1.15); box-shadow: 0 0 20px rgba(201,168,76,0.7); }
+  40%  { transform: rotate(-15deg) scale(0.9);  box-shadow: 0 0 5px rgba(201,168,76,0.2); }
+  60%  { transform: rotate(10deg)  scale(1.1);  box-shadow: 0 0 18px rgba(201,168,76,0.6); }
+  80%  { transform: rotate(-5deg)  scale(1.05); box-shadow: 0 0 12px rgba(201,168,76,0.4); }
+  100% { transform: rotate(0deg)   scale(1);    box-shadow: 0 0 10px rgba(201,168,76,0.3); }
 }
 
 /* ── CURRENT PLAYER INFO ── */

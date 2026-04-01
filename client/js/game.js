@@ -202,7 +202,7 @@ function renderBoard(state) {
     } else {
       const name = document.createElement('div');
       name.className = 'tile-name';
-      name.textContent = formatTileName(tile.name);
+      name.textContent = tile.name;
       el.appendChild(name);
 
       // Only show price outside band for non-property tiles (tax cost, etc.)
