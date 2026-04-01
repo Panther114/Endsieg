@@ -51,14 +51,14 @@ const loadingTimeout = setTimeout(() => {
 // Maps tile id -> [gridRow, gridCol] (1-indexed, 14x10 grid)
 function buildPositionMap() {
   const pos = {};
-  // Bottom row (row 10): tiles 0-13, right to left (col 14 down to 1)
-  for (let i = 0; i <= 13; i++) pos[i] = [10, 14 - i];
-  // Left col (col 1): tiles 14-21, row 9 down to 2
-  for (let i = 14; i <= 21; i++) pos[i] = [23 - i, 1];
-  // Top row (row 1): tiles 22-35, col 1 to 14
-  for (let i = 22; i <= 35; i++) pos[i] = [1, i - 21];
-  // Right col (col 14): tiles 36-43, row 2 to 9
-  for (let i = 36; i <= 43; i++) pos[i] = [i - 34, 14];
+  // Top row (row 1): tiles 0-13, left to right (col 1 to 14)
+  for (let i = 0; i <= 13; i++) pos[i] = [1, i + 1];
+  // Right col (col 14): tiles 14-21, row 2 to 9
+  for (let i = 14; i <= 21; i++) pos[i] = [i - 12, 14];
+  // Bottom row (row 10): tiles 22-35, right to left (col 14 down to 1)
+  for (let i = 22; i <= 35; i++) pos[i] = [10, 14 - (i - 22)];
+  // Left col (col 1): tiles 36-43, row 9 down to 2
+  for (let i = 36; i <= 43; i++) pos[i] = [9 - (i - 36), 1];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -537,9 +537,15 @@ function renderLog(log) {
   const panel = document.getElementById('logPanel');
   panel.innerHTML = '';
   (log || []).slice().reverse().forEach(entry => {
-    const p = document.createElement('p');
-    p.textContent = entry;
-    panel.appendChild(p);
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    if (typeof entry === 'string') {
+      div.textContent = entry;
+    } else {
+      div.textContent = entry.text;
+      div.classList.add(`log-${entry.type || 'info'}`);
+    }
+    panel.appendChild(div);
   });
 }
 
