@@ -101,7 +101,7 @@ class GameRoom {
     if (typeof funds === 'number' && funds >= 500 && funds <= 10000) {
       for (const p of this.players) p.money = funds;
     }
-    this._addLog('Game started! ' + this.players.map(p => p.name).join(', ') + ' are playing.');
+    this._addLog('Game started! ' + this.players.map(p => p.name).join(', ') + ' are playing.', 'system');
   }
 
   rollDice(playerId) {
@@ -120,16 +120,16 @@ class GameRoom {
       if (isDouble) {
         player.inJail = false;
         player.jailTurns = 0;
-        this._addLog(`${player.name} rolled doubles and got out of Jail!`);
+        this._addLog(`${player.name} rolled doubles and got out of Jail!`, 'jail');
       } else {
         player.jailTurns++;
         if (player.jailTurns >= 3) {
           player.money -= 50;
           player.inJail = false;
           player.jailTurns = 0;
-          this._addLog(`${player.name} paid $50 after 3 turns in Jail.`);
+          this._addLog(`${player.name} paid $50 after 3 turns in Jail.`, 'jail');
         } else {
-          this._addLog(`${player.name} rolled ${d1}+${d2} — still in Jail (turn ${player.jailTurns}/3).`);
+          this._addLog(`${player.name} is still in Jail (turn ${player.jailTurns}/3).`, 'jail');
           this.turnPhase = 'end';
           return this.getState();
         }
@@ -139,7 +139,7 @@ class GameRoom {
     if (isDouble) {
       this._doubleCount++;
       if (this._doubleCount >= 3) {
-        this._addLog(`${player.name} rolled 3 doubles — Go to Jail!`);
+        this._addLog(`${player.name} rolled 3 doubles — Go to Jail!`, 'jail');
         this._doubleCount = 0;
         this.sendToJail(player);
         this.turnPhase = 'action';
@@ -155,11 +155,10 @@ class GameRoom {
     // Check passed GO (new position is less than old means we wrapped around)
     if (player.position < prevPos) {
       player.money += 200;
-      this._addLog(`${player.name} passed GO and collected $200!`);
+      this._addLog(`${player.name} passed GO and collected $200!`, 'system');
     }
 
     const tile = BOARD[player.position];
-    this._addLog(`${player.name} rolled ${d1}+${d2}=${roll}`);
 
     this.handleTile(player, tile);
     this.turnPhase = isDouble ? 'roll' : 'action';
@@ -171,12 +170,12 @@ class GameRoom {
     switch (tile.type) {
       case 'go':
         player.money += 200;
-        this._addLog(`${player.name} landed on GO and collects $200!`);
+        this._addLog(`${player.name} landed on GO and collects $200!`, 'money');
         break;
 
       case 'tax':
         player.money -= tile.cost;
-        this._addLog(`${player.name} paid $${tile.cost} tax.`);
+        this._addLog(`${player.name} paid $${tile.cost} tax.`, 'money');
         if (player.money < 0 && !player.bankrupt) {
           this.eliminatePlayer(player);
         }
@@ -198,7 +197,7 @@ class GameRoom {
             const rent = this._calcRent(tile, player);
             player.money -= rent;
             owner.money += rent;
-            this._addLog(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}.`);
+            this._addLog(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}.`, 'money');
             if (player.money < 0 && !player.bankrupt) {
               this.eliminatePlayer(player);
             }
@@ -211,7 +210,7 @@ class GameRoom {
         if (this.chanceCards.length === 0) this.chanceCards = shuffle(CHANCE_CARDS);
         const card = this.chanceCards.shift();
         this.chanceCards.push(card);
-        this._addLog(`CHANCE: ${card.text}`);
+        this._addLog(`CHANCE: ${card.text}`, 'card');
         this._applyCard(player, card);
         break;
       }
@@ -220,7 +219,7 @@ class GameRoom {
         if (this.chestCards.length === 0) this.chestCards = shuffle(CHEST_CARDS);
         const card = this.chestCards.shift();
         this.chestCards.push(card);
-        this._addLog(`COMMUNITY CHEST: ${card.text}`);
+        this._addLog(`COMMUNITY CHEST: ${card.text}`, 'card');
         this._applyCard(player, card);
         break;
       }
@@ -244,7 +243,7 @@ class GameRoom {
         const dest = card.target;
         if (dest < player.position) {
           player.money += 200;
-          this._addLog(`${player.name} passed GO — collects $200!`);
+          this._addLog(`${player.name} passed GO — collects $200!`, 'system');
         }
         player.position = dest;
         this.handleTile(player, BOARD[dest]);
@@ -268,21 +267,21 @@ class GameRoom {
         }
         if (nearest < player.position && minDist !== 0) {
           player.money += 200;
-          this._addLog(`${player.name} passed GO — collects $200!`);
+          this._addLog(`${player.name} passed GO — collects $200!`, 'system');
         }
         player.position = nearest;
         this.handleTile(player, BOARD[nearest]);
         break;
       }
       case 'jail_free':
-        this._addLog(`${player.name} gets a Get Out of Jail Free card!`);
+        this._addLog(`${player.name} gets a Get Out of Jail Free card!`, 'card');
         break;
       case 'pay_each': {
         const activePlayers = this.players.filter(p => !p.bankrupt && p.id !== player.id);
         const total = card.amount * activePlayers.length;
         player.money -= total;
         for (const p of activePlayers) p.money += card.amount;
-        this._addLog(`${player.name} paid $${card.amount} to each player.`);
+        this._addLog(`${player.name} paid $${card.amount} to each player.`, 'money');
         break;
       }
       case 'collect_each': {
@@ -290,7 +289,7 @@ class GameRoom {
         const total = card.amount * activePlayers.length;
         player.money += total;
         for (const p of activePlayers) p.money -= card.amount;
-        this._addLog(`${player.name} collected $${card.amount} from each player.`);
+        this._addLog(`${player.name} collected $${card.amount} from each player.`, 'money');
         break;
       }
     }
@@ -348,13 +347,13 @@ class GameRoom {
     if (!['property', 'railroad', 'utility'].includes(tile.type)) return this.getState();
     if (this.propertyOwners[tile.id]) return this.getState();
     if (player.money < tile.price) {
-      this._addLog(`${player.name} can't afford ${tile.name} ($${tile.price}).`);
+      this._addLog(`${player.name} can't afford ${tile.name} ($${tile.price}).`, 'money');
       return this.getState();
     }
     player.money -= tile.price;
     player.properties.push(tile.id);
     this.propertyOwners[tile.id] = playerId;
-    this._addLog(`${player.name} bought ${tile.name} for $${tile.price}.`);
+    this._addLog(`${player.name} bought ${tile.name} for $${tile.price}.`, 'money');
     return this.getState();
   }
 
@@ -365,31 +364,31 @@ class GameRoom {
     if (!tile || tile.type !== 'property') return this.getState();
     if (this.propertyOwners[tile.id] !== playerId) return this.getState();
     if (!this._ownsFullGroup(playerId, tile.group)) {
-      this._addLog(`${player.name} needs to own the full color group to build.`);
+      this._addLog(`${player.name} needs to own the full color group to build.`, 'info');
       return this.getState();
     }
     if (!player.houses) player.houses = {};
     const current = player.houses[tileId] || 0;
     if (current >= 5) {
-      this._addLog(`${tile.name} already has a hotel.`);
+      this._addLog(`${tile.name} already has a hotel.`, 'info');
       return this.getState();
     }
     // Enforce even building: can't build on this tile if another tile in the group has fewer houses
     const groupTiles = BOARD.filter(t => t.group === tile.group && t.type === 'property');
     const minHouses = Math.min(...groupTiles.map(t => player.houses[t.id] || 0));
     if (current > minHouses) {
-      this._addLog(`${player.name} must build evenly across the group.`);
+      this._addLog(`${player.name} must build evenly across the group.`, 'info');
       return this.getState();
     }
     const cost = Math.floor(tile.price / 2);
     if (player.money < cost) {
-      this._addLog(`${player.name} can't afford to build on ${tile.name} ($${cost}).`);
+      this._addLog(`${player.name} can't afford to build on ${tile.name} ($${cost}).`, 'money');
       return this.getState();
     }
     player.money -= cost;
     player.houses[tileId] = current + 1;
     const label = player.houses[tileId] === 5 ? 'hotel' : `${player.houses[tileId]} house(s)`;
-    this._addLog(`${player.name} built on ${tile.name} (now ${label}).`);
+    this._addLog(`${player.name} built on ${tile.name} (now ${label}).`, 'money');
     return this.getState();
   }
 
@@ -453,7 +452,7 @@ class GameRoom {
       this.propertyOwners[pid] = fromId;
     }
 
-    this._addLog(`${from.name} and ${to.name} completed a trade.`);
+    this._addLog(`${from.name} and ${to.name} completed a trade.`, 'system');
     return this.getState();
   }
 
@@ -461,26 +460,26 @@ class GameRoom {
     const player = this.players.find(p => p.id === playerId);
     if (!player || !player.inJail) return this.getState();
     if (player.money < 50) {
-      this._addLog(`${player.name} can't afford the $50 jail fee.`);
+      this._addLog(`${player.name} can't afford the $50 jail fee.`, 'jail');
       return this.getState();
     }
     player.money -= 50;
     player.inJail = false;
     player.jailTurns = 0;
-    this._addLog(`${player.name} paid $50 to get out of Jail.`);
+    this._addLog(`${player.name} paid $50 to get out of Jail.`, 'jail');
     return this.getState();
   }
 
   sendToJail(player) {
-    player.position = 13;
+    player.position = 22;
     player.inJail = true;
     player.jailTurns = 0;
-    this._addLog(`${player.name} was sent to Jail!`);
+    this._addLog(`${player.name} was sent to Jail!`, 'jail');
   }
 
   eliminatePlayer(player) {
     player.bankrupt = true;
-    this._addLog(`${player.name} went bankrupt and is eliminated!`);
+    this._addLog(`${player.name} went bankrupt and is eliminated!`, 'system');
 
     // Return properties to bank
     for (const pid of player.properties) {
@@ -492,10 +491,10 @@ class GameRoom {
     const active = this.players.filter(p => !p.bankrupt);
     if (active.length === 1) {
       this.winner = active[0];
-      this._addLog(`${active[0].name} wins the game!`);
+      this._addLog(`${active[0].name} wins the game!`, 'winner');
     } else if (active.length === 0) {
       // Shouldn't normally happen; no winner declared
-      this._addLog('All players are bankrupt — no winner declared.');
+      this._addLog('All players are bankrupt — no winner declared.', 'system');
     } else {
       // Advance to next active player
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
@@ -512,9 +511,9 @@ class GameRoom {
     return this.players[this.currentPlayerIndex] || null;
   }
 
-  _addLog(msg) {
-    this.log.push(msg);
-    if (this.log.length > 50) this.log.shift();
+  _addLog(msg, type = 'info') {
+    this.log.push({ text: msg, type, ts: Date.now() });
+    if (this.log.length > 100) this.log.shift();
   }
 
   getState() {

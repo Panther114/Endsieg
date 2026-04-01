@@ -452,6 +452,21 @@ body.game-page {
   font-weight: 600;
 }
 
+/* ── EVENT LOG COLORS ── */
+.log-entry {
+  color: var(--text-dim);
+  padding: 2px 0;
+  font-size: clamp(10px, 1.1vw, 12px);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.log-system  { color: #60e0ff; }
+.log-move    { color: #e8e0d0; }
+.log-money   { color: #4ade80; }
+.log-card    { color: #fbbf24; }
+.log-jail    { color: #f87171; }
+.log-winner  { color: #c9a84c; font-weight: 700; font-size: 1.1em; }
+.log-info    { color: #a0a8c0; }
+
 /* ── CHAT ── */
 .chat-log {
   overflow-y: auto;
