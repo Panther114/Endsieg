@@ -16,21 +16,10 @@
   <!-- GAME LAYOUT -->
   <div id="gameLayout" class="game-layout" style="display:none;">
 
-    <!-- LEFT PANEL: Players -->
+    <!-- LEFT PANEL: Players + Chat -->
     <aside id="leftPanel" class="panel panel-left">
       <h2 class="panel-title">Players</h2>
       <div id="playerCards" class="player-cards"></div>
-    </aside>
-
-    <!-- CENTER: Board -->
-    <main class="board-wrapper">
-      <div id="board" class="board"></div>
-    </main>
-
-    <!-- RIGHT PANEL: Log + Chat -->
-    <aside id="rightPanel" class="panel panel-right">
-      <h2 class="panel-title">Event Log</h2>
-      <div id="logPanel" class="log-panel"></div>
 
       <h2 class="panel-title" style="margin-top:12px;">Chat</h2>
       <div id="chatLog" class="chat-log"></div>
@@ -38,10 +27,17 @@
         <input id="chatInput" type="text" placeholder="Say something..." maxlength="200" />
         <button class="btn btn-small" onclick="sendChat()">Send</button>
       </div>
+    </aside>
 
-      <div style="margin-top:12px;">
-        <button class="btn btn-secondary btn-small" onclick="openTradeModal()">🤝 Trade</button>
-      </div>
+    <!-- CENTER: Board -->
+    <main class="board-wrapper">
+      <div id="board" class="board"></div>
+    </main>
+
+    <!-- RIGHT PANEL: Event Log -->
+    <aside id="rightPanel" class="panel panel-right">
+      <h2 class="panel-title">Event Log</h2>
+      <div id="eventLog" class="log-panel"></div>
     </aside>
 
   </div>

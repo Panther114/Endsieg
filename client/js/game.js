@@ -148,7 +148,7 @@ function renderBoard(state) {
 
     // Color band (with house/hotel icons and price)
     const houseOwner = state.players.find(p => p.id === (state.propertyOwners && state.propertyOwners[tile.id]));
-    if (tile.color) {
+    if (tile.type === 'property' && tile.color) {
       const band = document.createElement('div');
       band.className = `color-band band-${tile.color}`;
 
@@ -193,6 +193,7 @@ function renderBoard(state) {
       if (owner) {
         el.style.outline = `3px solid ${owner.color}`;
         el.style.outlineOffset = '-2px';
+        el.style.boxShadow = `0 0 8px 2px ${owner.color}, inset 0 0 6px 1px ${owner.color}88`;
       }
     }
 
@@ -323,6 +324,7 @@ function updateBoardCenter(state, centerEl) {
 
     if (phase === 'roll') {
       btnRow.appendChild(makeCenterBtn('🎲 Roll', 'roll', rollDice));
+      btnRow.appendChild(makeCenterBtn('🤝 Trade', 'trade', openTradeModal));
       if (myPlayer.inJail && myPlayer.money >= 50) {
         btnRow.appendChild(makeCenterBtn('🔓 Pay Jail', 'pay', payJail));
       }
@@ -344,6 +346,7 @@ function updateBoardCenter(state, centerEl) {
       });
       if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
 
+      btnRow.appendChild(makeCenterBtn('🤝 Trade', 'trade', openTradeModal));
       btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
     }
 
@@ -534,19 +537,24 @@ function renderPlayers(state) {
 
 // ── RENDER LOG ─────────────────────────────────────────────────────
 function renderLog(log) {
-  const panel = document.getElementById('logPanel');
-  panel.innerHTML = '';
-  (log || []).slice().reverse().forEach(entry => {
+  const el = document.getElementById('eventLog');
+  if (!el) return;
+  el.innerHTML = '';
+  const entries = (log || []).slice(-15);
+  entries.forEach((entry, i) => {
     const div = document.createElement('div');
     div.className = 'log-entry';
+    const opacity = 0.25 + (i / (entries.length - 1 || 1)) * 0.75;
+    div.style.opacity = opacity.toFixed(2);
     if (typeof entry === 'string') {
       div.textContent = entry;
     } else {
       div.textContent = entry.text;
       div.classList.add(`log-${entry.type || 'info'}`);
     }
-    panel.appendChild(div);
+    el.appendChild(div);
   });
+  el.scrollTop = el.scrollHeight;
 }
 
 // ── CHAT ───────────────────────────────────────────────────────────
