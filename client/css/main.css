@@ -518,6 +518,7 @@ body.game-page {
 
 /* ── LOG PANEL ── */
 .log-panel {
+  flex: 1;
   overflow-y: auto;
   font-family: 'Inter', sans-serif;
   font-size: 0.68rem;
@@ -527,7 +528,6 @@ body.game-page {
 }
 
 .panel-right .log-panel {
-  flex: 1;
   max-height: none;
 }
 
@@ -564,6 +564,12 @@ body.game-page {
 /* ── CHAT ── */
 .chat-section {
   flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 4px;
 }
 
 .chat-log {
