@@ -563,7 +563,6 @@ function updateBoardCenter(state, centerEl) {
 
     if (phase === 'roll') {
       btnRow.appendChild(makeCenterBtn('🎲 Roll', 'roll', rollDice));
-      btnRow.appendChild(makeCenterBtn('🤝 Trade', 'trade', openTradeModal));
       if (myPlayer.inJail && myPlayer.money >= 50) {
         btnRow.appendChild(makeCenterBtn('🔓 Pay Jail', 'pay', payJail));
       }
@@ -587,7 +586,6 @@ function updateBoardCenter(state, centerEl) {
       });
       if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
 
-      btnRow.appendChild(makeCenterBtn('🤝 Trade', 'trade', openTradeModal));
       btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
     }
 
@@ -715,7 +713,7 @@ function showTileInfo(tileId) {
       mortgageBtn.style.marginTop = '8px';
       mortgageBtn.style.width = '100%';
       if (isMortgaged) {
-        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.textContent = `Unmortgage ($${tile.price})`;
         mortgageBtn.onclick = () => {
           socket.emit('unmortgage_property', { roomId, tileId });
           document.getElementById('tileInfoModal').style.display = 'none';
@@ -748,7 +746,7 @@ function showTileInfo(tileId) {
       mortgageBtn.style.marginTop = '8px';
       mortgageBtn.style.width = '100%';
       if (isMortgaged) {
-        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.textContent = `Unmortgage ($${tile.price})`;
         mortgageBtn.onclick = () => { socket.emit('unmortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
       } else {
         mortgageBtn.textContent = `Mortgage (+$${Math.floor(tile.price / 2)})`;
@@ -771,7 +769,7 @@ function showTileInfo(tileId) {
       mortgageBtn.style.marginTop = '8px';
       mortgageBtn.style.width = '100%';
       if (isMortgaged) {
-        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.textContent = `Unmortgage ($${tile.price})`;
         mortgageBtn.onclick = () => { socket.emit('unmortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
       } else {
         mortgageBtn.textContent = `Mortgage (+$${Math.floor(tile.price / 2)})`;
@@ -1008,7 +1006,9 @@ function openTradeModal() {
   });
 
   if (!select.options.length) {
-    alert('No other active players to trade with.');
+    const errEl = document.getElementById('tradeErrorMsg');
+    if (errEl) errEl.textContent = 'No other active players to trade with.';
+    document.getElementById('tradeModal').style.display = 'flex';
     return;
   }
 
