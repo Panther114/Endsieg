@@ -138,7 +138,15 @@ function startGame() {
   if (!myRoomId) return;
   const fundsEl = document.getElementById('startingFunds');
   const startingFunds = fundsEl ? parseInt(fundsEl.value) || 1500 : 1500;
-  socket.emit('start_game', { roomId: myRoomId, startingFunds });
+  const rules = {
+    doubleRentFullSet: document.getElementById('rule-doubleRentFullSet')?.checked ?? true,
+    vacationCash:      document.getElementById('rule-vacationCash')?.checked ?? false,
+    auction:           document.getElementById('rule-auction')?.checked ?? false,
+    noRentInJail:      document.getElementById('rule-noRentInJail')?.checked ?? true,
+    mortgage:          document.getElementById('rule-mortgage')?.checked ?? true,
+    evenBuild:         document.getElementById('rule-evenBuild')?.checked ?? true
+  };
+  socket.emit('start_game', { roomId: myRoomId, startingFunds, rules });
 }
 
 // Expose to HTML onclick

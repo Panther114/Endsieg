@@ -10,14 +10,20 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
+// ── ANIMATION STATE ─────────────────────────────────────────────────
+let prevPositions  = {};  // playerId -> tileId before last move
+let animating      = false;
+let pendingRender  = null;
+
 // Color map for board property groups
 const COLOR_MAP = {
   brown:'#8B4513', cyan:'#00BCD4', pink:'#E91E63', orange:'#FF9800',
   red:'#F44336', yellow:'#FFC107', green:'#4CAF50', darkblue:'#1a237e'
 };
 
+const BOARD_PATH_LENGTH = 44;
+
 // ── FORMAT TILE NAME ───────────────────────────────────────────────
-// Splits words longer than 5 chars into ≤5-char chunks for compact display
 function formatTileName(name) {
   return name.split(' ').map(word => {
     if (word.length <= 5) return word;
@@ -45,24 +51,12 @@ const loadingTimeout = setTimeout(() => {
   }
 }, 8000);
 
-// ── DICE FACES removed — using numeric display ──────────────────────
-
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
-// Maps tile id -> [gridRow, gridCol] (1-indexed, 14x10 grid)
-// Matches server/boardData.js clockwise layout — GO at top-left corner:
-//   Top row   (row  1): ids  0–13,  col 1→14  (left to right)
-//   Right col (col 14): ids 14–21,  row 2→9
-//   Bottom row (row 10): ids 22–35, col 14→1  (right to left)
-//   Left col  (col  1): ids 36–43,  row 9→2
 function buildPositionMap() {
   const pos = {};
-  // Top row (row 1): tiles 0–13, col 1→14 (left to right)
   for (let i = 0; i <= 13; i++) pos[i] = [1, i + 1];
-  // Right col (col 14): tiles 14–21, row 2→9
   for (let i = 14; i <= 21; i++) pos[i] = [i - 12, 14];
-  // Bottom row (row 10): tiles 22–35, col 14→1 (right to left)
   for (let i = 22; i <= 35; i++) pos[i] = [10, 36 - i];
-  // Left col (col 1): tiles 36–43, row 9→2
   for (let i = 36; i <= 43; i++) pos[i] = [45 - i, 1];
   return pos;
 }
@@ -75,27 +69,37 @@ socket.on('connect', () => {
     window.location.href = '/';
     return;
   }
-  // Get playerName from sessionStorage (set by lobby before redirect)
   const playerName = sessionStorage.getItem('endsieg_playerName') || '';
   socket.emit('request_game_state', { roomId, playerName });
 });
 
 socket.on('room_updated', () => {
-  // Game hasn't started yet — redirect back to lobby
   window.location.href = '/';
 });
 
 socket.on('game_started', (state) => {
   gameState = state;
   hideLoading();
+  // Seed prevPositions so no animation on first render
+  for (const p of state.players) prevPositions[p.id] = p.position;
   renderAll(state);
 });
 
 socket.on('game_updated', (state) => {
   gameState = state;
   hideLoading();
-  renderAll(state);
   if (state.winner) showWinner(state.winner);
+
+  // Update auction modal if open
+  if (state.auctionState) {
+    updateAuctionDisplay(state);
+  }
+
+  if (animating) {
+    pendingRender = state;
+    return;
+  }
+  animateAndRender(state);
 });
 
 socket.on('chat_message', ({ playerName, message }) => {
@@ -119,6 +123,83 @@ socket.on('player_left', ({ playerName }) => {
   }
 });
 
+socket.on('player_kicked', ({ playerName }) => {
+  showToast(`${playerName} was kicked from the game.`);
+});
+
+// ── AUCTION EVENTS ─────────────────────────────────────────────────
+let _currentAuctionTileId = null;
+
+socket.on('auction_started', (info) => {
+  _currentAuctionTileId = info.tileId;
+  document.getElementById('auctionTileName').textContent = info.tileName;
+  document.getElementById('auctionTilePrice').textContent = info.tilePrice;
+  document.getElementById('auctionCurrentBid').textContent = '0';
+  document.getElementById('auctionCurrentBidder').textContent = '—';
+  document.getElementById('auctionStatus').textContent = 'Place your bid or pass.';
+  document.getElementById('auctionBidInput').value = '';
+  document.getElementById('auctionBidBtn').disabled = false;
+  document.getElementById('auctionPassBtn').disabled = false;
+  document.getElementById('auctionModal').style.display = 'flex';
+});
+
+socket.on('auction_ended', ({ tileName, winner }) => {
+  document.getElementById('auctionModal').style.display = 'none';
+  if (winner) {
+    showToast(`${winner.name} won the auction for ${tileName}${winner.amount ? ' ($' + winner.amount + ')' : ''}!`);
+  } else {
+    showToast(`No bids — ${tileName} remains unowned.`);
+  }
+  _currentAuctionTileId = null;
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Auction bid
+  const auctionBidBtn = document.getElementById('auctionBidBtn');
+  if (auctionBidBtn) {
+    auctionBidBtn.addEventListener('click', () => {
+      const amount = parseInt(document.getElementById('auctionBidInput').value);
+      if (!amount || amount < 1) {
+        document.getElementById('auctionStatus').textContent = 'Enter a valid bid amount.';
+        return;
+      }
+      socket.emit('place_bid', { roomId, tileId: _currentAuctionTileId, amount });
+      auctionBidBtn.disabled = true;
+      document.getElementById('auctionPassBtn').disabled = true;
+      document.getElementById('auctionStatus').textContent = 'Bid placed. Waiting for others…';
+    });
+  }
+  const auctionPassBtn = document.getElementById('auctionPassBtn');
+  if (auctionPassBtn) {
+    auctionPassBtn.addEventListener('click', () => {
+      socket.emit('pass_bid', { roomId, tileId: _currentAuctionTileId });
+      auctionPassBtn.disabled = true;
+      document.getElementById('auctionBidBtn').disabled = true;
+      document.getElementById('auctionStatus').textContent = 'Passed. Waiting for others…';
+    });
+  }
+
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendChat();
+    });
+  }
+});
+
+function updateAuctionDisplay(state) {
+  if (!state.auctionState) return;
+  const bids = state.auctionState.bids || {};
+  let highestBid = 0;
+  let highestBidderId = null;
+  for (const [pid, amount] of Object.entries(bids)) {
+    if (amount > highestBid) { highestBid = amount; highestBidderId = pid; }
+  }
+  document.getElementById('auctionCurrentBid').textContent = highestBid;
+  const bidder = highestBidderId ? state.players.find(p => p.id === highestBidderId) : null;
+  document.getElementById('auctionCurrentBidder').textContent = bidder ? bidder.name : '—';
+}
+
 // ── HIDE LOADING ───────────────────────────────────────────────────
 function hideLoading() {
   clearTimeout(loadingTimeout);
@@ -127,11 +208,145 @@ function hideLoading() {
   document.getElementById('gameLayout').style.display = 'flex';
 }
 
+// ── ANIMATION ──────────────────────────────────────────────────────
+function animateAndRender(state) {
+  // Find players that moved (non-bankrupt, known previous position, different new position)
+  const movedPlayers = state.players.filter(p =>
+    !p.bankrupt &&
+    prevPositions[p.id] !== undefined &&
+    prevPositions[p.id] !== p.position
+  );
+
+  if (movedPlayers.length === 0) {
+    renderAll(state);
+    updatePrevPositions(state);
+    if (pendingRender) {
+      const next = pendingRender;
+      pendingRender = null;
+      animateAndRender(next);
+    }
+    return;
+  }
+
+  // Build per-player step paths (wrapping around board)
+  const paths = {};
+  for (const p of movedPlayers) {
+    const from = prevPositions[p.id];
+    const to = p.position;
+    const steps = [];
+    let cur = from;
+    while (cur !== to) {
+      cur = (cur + 1) % BOARD_PATH_LENGTH;
+      steps.push(cur);
+    }
+    paths[p.id] = steps;
+  }
+  const maxSteps = Math.max(...movedPlayers.map(p => paths[p.id].length));
+
+  // Render board WITHOUT tokens first, then place tokens at start positions
+  animating = true;
+  renderBoardNoTokens(state);
+
+  // Place starting tokens
+  const tokenEls = {};
+  for (const p of movedPlayers) {
+    const tok = createTokenEl(p);
+    tokenEls[p.id] = tok;
+    placeTokenOnTile(tok, prevPositions[p.id]);
+  }
+  // Also place non-moving players' tokens immediately
+  for (const p of state.players) {
+    if (!p.bankrupt && !movedPlayers.find(m => m.id === p.id)) {
+      const tok = createTokenEl(p);
+      placeTokenOnTile(tok, p.position);
+    }
+  }
+
+  let step = 0;
+  const tempPositions = {};
+  for (const p of movedPlayers) tempPositions[p.id] = prevPositions[p.id];
+
+  const interval = setInterval(() => {
+    if (step >= maxSteps) {
+      clearInterval(interval);
+      animating = false;
+      renderAll(state);
+      updatePrevPositions(state);
+      if (pendingRender) {
+        const next = pendingRender;
+        pendingRender = null;
+        animateAndRender(next);
+      }
+      return;
+    }
+
+    for (const p of movedPlayers) {
+      const pathSteps = paths[p.id];
+      if (step < pathSteps.length) {
+        const nextTile = pathSteps[step];
+        tempPositions[p.id] = nextTile;
+        const tok = tokenEls[p.id];
+        if (tok) placeTokenOnTile(tok, nextTile);
+      }
+    }
+    step++;
+  }, 120);
+}
+
+function createTokenEl(player) {
+  const tok = document.createElement('div');
+  tok.className = 'player-token anim-token';
+  tok.style.background = player.color;
+  tok.title = player.name;
+  tok.textContent = player.name.charAt(0).toUpperCase();
+  tok.dataset.playerId = player.id;
+  return tok;
+}
+
+function placeTokenOnTile(tokenEl, tileId) {
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
+  const tileEl = boardEl.querySelector(`[data-tileId="${tileId}"]`);
+  if (!tileEl) return;
+  let tc = tileEl.querySelector('.tokens-container');
+  if (!tc) {
+    tc = document.createElement('div');
+    tc.className = 'tokens-container';
+    tileEl.appendChild(tc);
+  }
+  tc.appendChild(tokenEl);
+}
+
+function updatePrevPositions(state) {
+  for (const p of state.players) {
+    prevPositions[p.id] = p.position;
+  }
+}
+
 // ── RENDER ALL ─────────────────────────────────────────────────────
 function renderAll(state) {
   renderBoard(state);
   renderPlayers(state);
   renderLog(state.log);
+}
+
+// ── RENDER BOARD (no tokens) ───────────────────────────────────────
+function renderBoardNoTokens(state) {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+
+  const board = state.board || [];
+  const myPlayer = state.players.find(p => p.id === myId);
+
+  board.forEach(tile => {
+    const [row, col] = TILE_POSITIONS[tile.id] || [1, 1];
+    const el = buildTileEl(tile, row, col, state, myPlayer, false);
+    boardEl.appendChild(el);
+  });
+
+  // Center actions
+  const center = buildCenterEl(state);
+  boardEl.appendChild(center);
 }
 
 // ── RENDER BOARD ───────────────────────────────────────────────────
@@ -142,92 +357,113 @@ function renderBoard(state) {
   const board = state.board || [];
   const myPlayer = state.players.find(p => p.id === myId);
 
-  // Place 40 tiles
   board.forEach(tile => {
     const [row, col] = TILE_POSITIONS[tile.id] || [1, 1];
-    const el = document.createElement('div');
-    el.className = buildTileClass(tile, row, col);
-    el.dataset.tileId = tile.id;
-    el.style.gridRow    = row;
-    el.style.gridColumn = col;
+    const el = buildTileEl(tile, row, col, state, myPlayer, true);
+    boardEl.appendChild(el);
+  });
 
-    // Color band (with house/hotel icons and price) — property tiles only
+  const center = buildCenterEl(state);
+  boardEl.appendChild(center);
+}
+
+function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
+  const el = document.createElement('div');
+  el.className = buildTileClass(tile, row, col);
+  el.dataset.tileId = tile.id;
+  el.style.gridRow    = row;
+  el.style.gridColumn = col;
+
+  // Color band — property tiles only
+  if (tile.type === 'property' && tile.color) {
     const houseOwner = state.players.find(p => p.id === (state.propertyOwners && state.propertyOwners[tile.id]));
-    if (tile.type === 'property' && tile.color) {
-      const band = document.createElement('div');
-      band.className = `color-band band-${tile.color}`;
+    const band = document.createElement('div');
+    band.className = `color-band band-${tile.color}`;
 
-      // Price inside band for maximum readability
-      if (tile.price) {
-        const priceInBand = document.createElement('div');
-        priceInBand.className = 'tile-price-band';
-        priceInBand.textContent = `$${tile.price}`;
-        band.appendChild(priceInBand);
-      }
+    if (tile.price) {
+      const priceInBand = document.createElement('div');
+      priceInBand.className = 'tile-price-band';
+      priceInBand.textContent = `$${tile.price}`;
+      band.appendChild(priceInBand);
+    }
 
-      // Add house/hotel icons to the band
-      const houseCount = (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) || 0;
-      if (houseCount > 0) {
-        band.style.display = 'flex';
-        band.style.flexDirection = 'column';
-        band.style.alignItems = 'center';
-        band.style.justifyContent = 'flex-end';
-        band.style.gap = '1px';
-        band.style.padding = '1px';
-        if (houseCount === 5) {
-          const hotel = document.createElement('span');
-          hotel.className = 'hotel-icon';
-          hotel.textContent = '🏨';
-          band.appendChild(hotel);
-        } else {
-          for (let h = 0; h < houseCount; h++) {
-            const house = document.createElement('span');
-            house.className = 'house-icon';
-            house.textContent = '🏠';
-            band.appendChild(house);
-          }
+    const houseCount = (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) || 0;
+    if (houseCount > 0) {
+      band.style.display = 'flex';
+      band.style.flexDirection = 'column';
+      band.style.alignItems = 'center';
+      band.style.justifyContent = 'flex-end';
+      band.style.gap = '1px';
+      band.style.padding = '1px';
+      if (houseCount === 5) {
+        const hotel = document.createElement('span');
+        hotel.className = 'hotel-icon';
+        hotel.textContent = '🏨';
+        band.appendChild(hotel);
+      } else {
+        for (let h = 0; h < houseCount; h++) {
+          const house = document.createElement('span');
+          house.className = 'house-icon';
+          house.textContent = '🏠';
+          band.appendChild(house);
         }
       }
-      el.appendChild(band);
     }
+    el.appendChild(band);
+  }
 
-    // Owner outline (replaces overlay)
-    const ownerId = state.propertyOwners && state.propertyOwners[tile.id];
-    if (ownerId) {
-      const owner = state.players.find(p => p.id === ownerId);
-      if (owner) {
-        el.style.outline = `3px solid ${owner.color}`;
-        el.style.outlineOffset = '-2px';
-        el.style.boxShadow = `0 0 8px 2px ${owner.color}, inset 0 0 6px 1px ${owner.color}88`;
-      }
+  // Owner outline — property/railroad/utility
+  const ownerId = state.propertyOwners && state.propertyOwners[tile.id];
+  if (ownerId) {
+    const owner = state.players.find(p => p.id === ownerId);
+    if (owner) {
+      el.style.outline = `3px solid ${owner.color}`;
+      el.style.outlineOffset = '-2px';
+      el.style.boxShadow = `0 0 8px 2px ${owner.color}, inset 0 0 6px 1px ${owner.color}88`;
     }
+  }
 
-    // Content
-    if (isCorner(row, col)) {
-      el.appendChild(buildCornerContent(tile));
-    } else {
-      const name = document.createElement('div');
-      name.className = 'tile-name';
-      name.textContent = tile.name;
-      el.appendChild(name);
+  // Mortgaged overlay
+  if (state.mortgaged && state.mortgaged[tile.id]) {
+    el.style.opacity = '0.55';
+    el.style.filter = 'grayscale(0.6)';
+  }
 
-      // Price tag for railroad and utility tiles only (no color band)
-      if ((tile.type === 'railroad' || tile.type === 'utility') && tile.price) {
-        const price = document.createElement('div');
-        price.className = 'tile-price';
-        price.textContent = `$${tile.price}`;
-        el.appendChild(price);
-      }
-      // Pay cost label for tax tiles only
-      if (tile.type === 'tax' && tile.cost) {
-        const cost = document.createElement('div');
-        cost.className = 'tile-price';
-        cost.textContent = `Pay $${tile.cost}`;
-        el.appendChild(cost);
-      }
+  // Content
+  if (isCorner(row, col)) {
+    el.appendChild(buildCornerContent(tile));
+  } else {
+    const name = document.createElement('div');
+    name.className = 'tile-name';
+    name.textContent = tile.name;
+    el.appendChild(name);
+
+    // Price tag for railroad and utility tiles
+    if ((tile.type === 'railroad' || tile.type === 'utility') && tile.price) {
+      const price = document.createElement('div');
+      price.className = 'tile-price';
+      price.textContent = `$${tile.price}`;
+      el.appendChild(price);
     }
+    // Pay cost label for tax tiles
+    if (tile.type === 'tax' && tile.cost) {
+      const cost = document.createElement('div');
+      cost.className = 'tile-price';
+      cost.textContent = `Pay $${tile.cost}`;
+      el.appendChild(cost);
+    }
+    // Free Parking pool display
+    if (tile.type === 'free_parking' && state.freeParkingPool > 0) {
+      const pool = document.createElement('div');
+      pool.className = 'tile-price';
+      pool.style.color = '#fbbf24';
+      pool.textContent = `$${state.freeParkingPool}`;
+      el.appendChild(pool);
+    }
+  }
 
-    // Player tokens
+  // Player tokens
+  if (withTokens) {
     const tokensHere = state.players.filter(p => p.position === tile.id && !p.bankrupt);
     if (tokensHere.length) {
       const tc = document.createElement('div');
@@ -242,34 +478,33 @@ function renderBoard(state) {
       });
       el.appendChild(tc);
     }
+  }
 
-    // Highlight current player's tile
-    if (myPlayer && tile.id === myPlayer.position) {
-      el.classList.add('current-player-tile');
-    }
+  // Highlight current player's tile
+  if (myPlayer && tile.id === myPlayer.position) {
+    el.classList.add('current-player-tile');
+  }
 
-    // Purchasable highlight
-    const isCurrPlayer = state.currentPlayerId === myId;
-    if (isCurrPlayer && myPlayer && tile.id === myPlayer.position &&
-        ['property','railroad','utility'].includes(tile.type) &&
-        !(state.propertyOwners && state.propertyOwners[tile.id])) {
-      el.classList.add('purchasable');
-    }
+  // Purchasable highlight
+  const isCurrPlayer = state.currentPlayerId === myId;
+  if (isCurrPlayer && myPlayer && tile.id === myPlayer.position &&
+      ['property','railroad','utility'].includes(tile.type) &&
+      !(state.propertyOwners && state.propertyOwners[tile.id])) {
+    el.classList.add('purchasable');
+  }
 
-    // Tile click — show info popup
-    el.addEventListener('click', () => showTileInfo(tile.id));
+  el.addEventListener('click', () => showTileInfo(tile.id));
+  return el;
+}
 
-    boardEl.appendChild(el);
-  });
-
-  // Board center actions
+function buildCenterEl(state) {
   const center = document.createElement('div');
   center.className = 'board-center-actions';
   center.id = 'boardCenterActions';
   center.style.gridRow    = '2 / 10';
   center.style.gridColumn = '2 / 14';
   updateBoardCenter(state, center);
-  boardEl.appendChild(center);
+  return center;
 }
 
 // ── BOARD CENTER ACTIONS ───────────────────────────────────────────
@@ -283,13 +518,11 @@ function updateBoardCenter(state, centerEl) {
   const phase = state.turnPhase;
   const currPlayer = state.players.find(p => p.id === state.currentPlayerId);
 
-  // Turn indicator bar (thin colored stripe at top)
   const turnBar = document.createElement('div');
   turnBar.className = 'turn-indicator-bar';
   turnBar.style.background = currPlayer ? currPlayer.color : 'transparent';
   el.appendChild(turnBar);
 
-  // Title
   const title = document.createElement('div');
   title.className = 'center-title';
   title.textContent = 'ENDSIEG';
@@ -300,7 +533,6 @@ function updateBoardCenter(state, centerEl) {
   sub.textContent = 'By Gavania';
   el.appendChild(sub);
 
-  // Dice
   const diceContainer = document.createElement('div');
   diceContainer.className = 'dice-container';
   diceContainer.id = 'diceDisplay';
@@ -311,7 +543,6 @@ function updateBoardCenter(state, centerEl) {
   }
   el.appendChild(diceContainer);
 
-  // Turn info
   const info = document.createElement('div');
   info.className = 'center-player-info';
   if (currPlayer) {
@@ -323,8 +554,7 @@ function updateBoardCenter(state, centerEl) {
   }
   el.appendChild(info);
 
-  // Action buttons (only if it's my turn)
-  if (isMyTurn && myPlayer && !myPlayer.bankrupt) {
+  if (isMyTurn && myPlayer && !myPlayer.bankrupt && phase !== 'auction') {
     const btnRow = document.createElement('div');
     btnRow.className = 'center-btn-row';
 
@@ -341,9 +571,11 @@ function updateBoardCenter(state, centerEl) {
       const owned = state.propertyOwners && state.propertyOwners[myPlayer.position];
       if (tile && ['property','railroad','utility'].includes(tile.type) && !owned && myPlayer.money >= tile.price) {
         btnRow.appendChild(makeCenterBtn('💰 Buy', 'buy', buyProperty));
+        // Skip button (auction or just skip)
+        const skipBtn = makeCenterBtn('⏭ Skip', 'skip', skipBuy);
+        btnRow.appendChild(skipBtn);
       }
 
-      // Build house button if any owned monopoly exists
       const canBuild = myPlayer.properties.some(pid => {
         const t = state.board && state.board[pid];
         if (!t || t.type !== 'property') return false;
@@ -361,6 +593,15 @@ function updateBoardCenter(state, centerEl) {
     }
 
     el.appendChild(btnRow);
+  }
+
+  // Show auction phase info
+  if (phase === 'auction' && state.auctionState) {
+    const aInfo = document.createElement('div');
+    aInfo.className = 'center-player-info';
+    aInfo.style.color = '#fbbf24';
+    aInfo.textContent = `🔨 Auction: ${state.auctionState.tileName}`;
+    el.appendChild(aInfo);
   }
 }
 
@@ -436,12 +677,19 @@ function showTileInfo(tileId) {
   const body = document.getElementById('tileInfoBody');
   body.innerHTML = '';
 
+  const isMortgaged = gameState.mortgaged && gameState.mortgaged[tileId];
+  const myPlayer = gameState.players.find(p => p.id === myId);
+  const rules = gameState.rules || {};
+
   if (tile.type === 'property') {
     const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
     const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
     const ownerHouses = owner && owner.houses ? (owner.houses[tileId] || 0) : 0;
 
     let html = `<p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>`;
+    if (isMortgaged) {
+      html += `<p class="tile-info-row"><span>Status</span><strong style="color:#f87171">Mortgaged</strong></p>`;
+    }
     if (owner) {
       html += `<p class="tile-info-row"><span>Owner</span><strong style="color:${owner.color}">${escapeHtml(owner.name)}</strong></p>`;
       html += `<p class="tile-info-row"><span>Built</span><strong>${ownerHouses === 5 ? '🏨 Hotel' : ownerHouses > 0 ? `🏠 ×${ownerHouses}` : 'None'}</strong></p>`;
@@ -456,10 +704,34 @@ function showTileInfo(tileId) {
     });
     html += `</tbody></table>`;
     body.innerHTML = html;
+
+    // Mortgage/unmortgage buttons (only for owner, if rules allow)
+    if (rules.mortgage && myPlayer && ownerId === myId) {
+      const mortgageBtn = document.createElement('button');
+      mortgageBtn.className = 'btn btn-secondary';
+      mortgageBtn.style.marginTop = '8px';
+      mortgageBtn.style.width = '100%';
+      if (isMortgaged) {
+        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => {
+          socket.emit('unmortgage_property', { roomId, tileId });
+          document.getElementById('tileInfoModal').style.display = 'none';
+        };
+      } else {
+        mortgageBtn.textContent = `Mortgage (+$${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => {
+          socket.emit('mortgage_property', { roomId, tileId });
+          document.getElementById('tileInfoModal').style.display = 'none';
+        };
+      }
+      body.appendChild(mortgageBtn);
+    }
+
   } else if (tile.type === 'railroad') {
     const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
     const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
     let html = `<p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>`;
+    if (isMortgaged) html += `<p class="tile-info-row"><span>Status</span><strong style="color:#f87171">Mortgaged</strong></p>`;
     html += `<p class="tile-info-row"><span>Owner</span><strong${owner ? ` style="color:${owner.color}"` : ''}>${owner ? escapeHtml(owner.name) : 'Unowned'}</strong></p>`;
     html += `<table class="rent-table"><thead><tr><th>RRs Owned</th><th>Rent</th></tr></thead><tbody>`;
     tile.rent.forEach((r, i) => {
@@ -467,14 +739,43 @@ function showTileInfo(tileId) {
     });
     html += `</tbody></table>`;
     body.innerHTML = html;
+    if (rules.mortgage && myPlayer && ownerId === myId) {
+      const mortgageBtn = document.createElement('button');
+      mortgageBtn.className = 'btn btn-secondary';
+      mortgageBtn.style.marginTop = '8px';
+      mortgageBtn.style.width = '100%';
+      if (isMortgaged) {
+        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => { socket.emit('unmortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
+      } else {
+        mortgageBtn.textContent = `Mortgage (+$${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => { socket.emit('mortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
+      }
+      body.appendChild(mortgageBtn);
+    }
   } else if (tile.type === 'utility') {
     const ownerId = gameState.propertyOwners && gameState.propertyOwners[tileId];
     const owner = ownerId ? gameState.players.find(p => p.id === ownerId) : null;
-    body.innerHTML = `
-      <p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>
-      <p class="tile-info-row"><span>Owner</span><strong${owner ? ` style="color:${owner.color}"` : ''}>${owner ? escapeHtml(owner.name) : 'Unowned'}</strong></p>
-      <p class="tile-info-desc">Rent: 4× dice (1 owned) or 10× dice (2 owned)</p>
-    `;
+    let html = `
+      <p class="tile-info-row"><span>Price</span><strong>$${tile.price}</strong></p>`;
+    if (isMortgaged) html += `<p class="tile-info-row"><span>Status</span><strong style="color:#f87171">Mortgaged</strong></p>`;
+    html += `<p class="tile-info-row"><span>Owner</span><strong${owner ? ` style="color:${owner.color}"` : ''}>${owner ? escapeHtml(owner.name) : 'Unowned'}</strong></p>
+      <p class="tile-info-desc">Rent: 4× dice (1 owned) or 10× dice (2 owned)</p>`;
+    body.innerHTML = html;
+    if (rules.mortgage && myPlayer && ownerId === myId) {
+      const mortgageBtn = document.createElement('button');
+      mortgageBtn.className = 'btn btn-secondary';
+      mortgageBtn.style.marginTop = '8px';
+      mortgageBtn.style.width = '100%';
+      if (isMortgaged) {
+        mortgageBtn.textContent = `Unmortgage ($${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => { socket.emit('unmortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
+      } else {
+        mortgageBtn.textContent = `Mortgage (+$${Math.floor(tile.price / 2)})`;
+        mortgageBtn.onclick = () => { socket.emit('mortgage_property', { roomId, tileId }); document.getElementById('tileInfoModal').style.display = 'none'; };
+      }
+      body.appendChild(mortgageBtn);
+    }
   } else if (tile.type === 'tax') {
     body.innerHTML = `<p class="tile-info-row"><span>Pay</span><strong>$${tile.cost}</strong></p>`;
   } else {
@@ -533,11 +834,51 @@ function renderPlayers(state) {
 
     const props = document.createElement('div');
     props.className = 'player-props';
-    props.textContent = `${p.properties.length} properties${p.inJail ? ' • In Jail' : ''}`;
+    props.textContent = `${p.properties.length} props${p.inJail ? ' • In Jail' : ''}`;
 
     card.appendChild(header);
     card.appendChild(money);
     card.appendChild(props);
+
+    // Votekick / Quit buttons
+    if (!p.bankrupt) {
+      const kickVotes = (state.kickVotes && state.kickVotes[p.id]) || [];
+      const totalVoters = state.players.filter(pl => !pl.bankrupt && pl.id !== p.id).length;
+
+      if (p.id === myId) {
+        // Quit button
+        const quitBtn = document.createElement('button');
+        quitBtn.className = 'btn-kick btn-quit';
+        quitBtn.textContent = 'Quit';
+        quitBtn.onclick = () => {
+          if (!quitBtn.dataset.confirming) {
+            quitBtn.dataset.confirming = '1';
+            quitBtn.textContent = 'Confirm?';
+            setTimeout(() => { if (quitBtn) { quitBtn.textContent = 'Quit'; delete quitBtn.dataset.confirming; } }, 3000);
+          } else {
+            socket.emit('quit_game', { roomId });
+          }
+        };
+        card.appendChild(quitBtn);
+      } else {
+        // Kick vote button
+        const iVoted = kickVotes.includes(myId);
+        const kickBtn = document.createElement('button');
+        kickBtn.className = `btn-kick${iVoted ? ' btn-kick-active' : ''}`;
+        kickBtn.textContent = iVoted
+          ? `Kick (${kickVotes.length}/${totalVoters}) ✓`
+          : `Kick (${kickVotes.length}/${totalVoters})`;
+        kickBtn.onclick = () => {
+          if (iVoted) {
+            socket.emit('undo_vote_kick', { roomId, targetId: p.id });
+          } else {
+            socket.emit('vote_kick', { roomId, targetId: p.id });
+          }
+        };
+        card.appendChild(kickBtn);
+      }
+    }
+
     container.appendChild(card);
   });
 }
@@ -567,6 +908,7 @@ function renderLog(log) {
 // ── CHAT ───────────────────────────────────────────────────────────
 function appendChat(playerName, message) {
   const log = document.getElementById('chatLog');
+  if (!log) return;
   const p = document.createElement('p');
   p.innerHTML = `<b>${escapeHtml(playerName)}:</b> ${escapeHtml(message)}`;
   log.appendChild(p);
@@ -575,6 +917,7 @@ function appendChat(playerName, message) {
 
 function sendChat() {
   const input = document.getElementById('chatInput');
+  if (!input) return;
   const msg = input.value.trim();
   if (!msg || !roomId) return;
   socket.emit('chat_message', { roomId, message: msg });
@@ -582,23 +925,16 @@ function sendChat() {
 }
 window.sendChat = sendChat;
 
-document.addEventListener('DOMContentLoaded', () => {
-  const chatInput = document.getElementById('chatInput');
-  if (chatInput) {
-    chatInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') sendChat();
-    });
-  }
-});
-
 // ── GAME ACTIONS ───────────────────────────────────────────────────
 function rollDice()    { if (roomId) socket.emit('roll_dice',    { roomId }); }
 function buyProperty() { if (roomId) socket.emit('buy_property', { roomId }); }
+function skipBuy()     { if (roomId) socket.emit('skip_buy',     { roomId }); }
 function endTurn()     { if (roomId) socket.emit('end_turn',     { roomId }); }
 function payJail()     { if (roomId) socket.emit('pay_jail',     { roomId }); }
 
 window.rollDice    = rollDice;
 window.buyProperty = buyProperty;
+window.skipBuy     = skipBuy;
 window.endTurn     = endTurn;
 window.payJail     = payJail;
 
@@ -618,11 +954,13 @@ function openBuildModal() {
     const hasMonopoly = groupTiles.every(b => gameState.propertyOwners && gameState.propertyOwners[b.id] === myId);
     if (!hasMonopoly) return;
 
+    // No build on mortgaged group
+    if (groupTiles.some(t => gameState.mortgaged && gameState.mortgaged[t.id])) return;
+
     const current = (myPlayer.houses && myPlayer.houses[pid]) || 0;
     if (current >= 5) return;
 
-    // Even building check: only show if we can build here
-    const minHouses = Math.min(...groupTiles.map(t => myPlayer.houses && myPlayer.houses[t.id] || 0));
+    const minHouses = Math.min(...groupTiles.map(t => (myPlayer.houses && myPlayer.houses[t.id]) || 0));
     if (current > minHouses) return;
 
     const cost = Math.floor(tile.price / 2);
@@ -657,7 +995,6 @@ function openTradeModal() {
   const myPlayer = gameState.players.find(p => p.id === myId);
   if (!myPlayer) return;
 
-  // Populate target players
   const select = document.getElementById('tradeTarget');
   select.innerHTML = '';
   gameState.players.filter(p => p.id !== myId && !p.bankrupt).forEach(p => {
@@ -672,13 +1009,16 @@ function openTradeModal() {
     return;
   }
 
-  // My properties
   renderTradeProps('tradeFromProps', myPlayer.properties, gameState);
   select.onchange = updateTargetProps;
   updateTargetProps();
 
   document.getElementById('tradeFromMoney').value = 0;
   document.getElementById('tradeToMoney').value   = 0;
+
+  // Clear any previous error
+  const errEl = document.getElementById('tradeErrorMsg');
+  if (errEl) errEl.textContent = '';
 
   document.getElementById('tradeModal').style.display = 'flex';
 }
@@ -717,6 +1057,15 @@ function submitTrade() {
   const toId     = select.value;
   const fromMoney = parseInt(document.getElementById('tradeFromMoney').value) || 0;
   const toMoney   = parseInt(document.getElementById('tradeToMoney').value)   || 0;
+
+  const myPlayer = gameState && gameState.players.find(p => p.id === myId);
+
+  // BUG FIX 2: Client-side balance validation
+  if (myPlayer && fromMoney > myPlayer.money) {
+    const errEl = document.getElementById('tradeErrorMsg');
+    if (errEl) errEl.textContent = `Cannot offer more than $${myPlayer.money}`;
+    return;
+  }
 
   const fromProps = Array.from(document.querySelectorAll('#tradeFromProps input:checked')).map(cb => parseInt(cb.value));
   const toProps   = Array.from(document.querySelectorAll('#tradeToProps input:checked')).map(cb => parseInt(cb.value));
@@ -813,7 +1162,6 @@ function showToast(message) {
   toast.className = 'toast';
   toast.textContent = message;
   container.appendChild(toast);
-  // Trigger transition
   requestAnimationFrame(() => toast.classList.add('toast-visible'));
   setTimeout(() => {
     toast.classList.remove('toast-visible');
