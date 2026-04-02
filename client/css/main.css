@@ -447,15 +447,19 @@ body.game-page {
 }
 
 /* ── PLAYER CARDS ── */
-.player-cards { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; min-height: 0; }
+.player-cards { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow-y: auto; min-height: 0; }
 
 .player-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
   border-left: 2px solid transparent;
-  border-radius: 6px;
-  padding: 5px 7px;
+  border-radius: 4px;
+  padding: 3px 5px;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
 }
 
 .player-card:hover {
@@ -467,7 +471,7 @@ body.game-page {
   border-color: rgba(201,168,76,0.4);
   border-left: 3px solid var(--accent);
   background: rgba(201,168,76,0.07);
-  box-shadow: 0 0 16px rgba(201,168,76,0.12), inset 0 0 0 1px rgba(201,168,76,0.05);
+  box-shadow: 0 0 10px rgba(201,168,76,0.1), inset 0 0 0 1px rgba(201,168,76,0.05);
 }
 
 .player-card.bankrupt {
@@ -476,17 +480,14 @@ body.game-page {
 }
 
 .player-card-header {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 2px;
+  display: contents; /* lets token + name flow directly into card's flex row */
 }
 
 .player-token-sm {
-  width: 17px; height: 17px;
+  width: 13px; height: 13px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.5rem;
+  font-size: 0.42rem;
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
@@ -494,24 +495,30 @@ body.game-page {
 }
 
 .player-name-sm {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .player-money {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 13px;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #4ade80;
-  text-shadow: 0 0 6px rgba(74,222,128,0.35);
+  text-shadow: 0 0 5px rgba(74,222,128,0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .player-props {
-  font-size: 0.60rem;
+  font-size: 0.55rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ── LOG PANEL ── */
@@ -1005,21 +1012,26 @@ body.game-page {
 
 /* ── VOTEKICK BUTTONS ── */
 .btn-kick {
-  display: block;
-  width: 100%;
-  margin-top: 5px;
-  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin-top: 0;
+  margin-left: 2px;
+  padding: 1px 5px;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   border: 1px solid rgba(231,76,60,0.4);
   color: rgba(231,76,60,0.8);
   transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-kick:hover {
@@ -1032,7 +1044,7 @@ body.game-page {
   background: rgba(231,76,60,0.25);
   border-color: #e74c3c;
   color: #ff6b6b;
-  box-shadow: 0 0 6px rgba(231,76,60,0.4);
+  box-shadow: 0 0 4px rgba(231,76,60,0.3);
 }
 
 .btn-quit {
