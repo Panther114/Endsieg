@@ -472,12 +472,12 @@ function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
     }
   }
 
-  // Free Parking pool display (applies to corner tile too)
-  if (tile.type === 'free_parking' && state.freeParkingPool > 0) {
+  // Free Parking pool display — always shown, pinned to top of tile
+  if (tile.type === 'free_parking') {
     const pool = document.createElement('div');
     pool.className = 'free-parking-pool';
     pool.textContent = `$${state.freeParkingPool}`;
-    el.appendChild(pool);
+    el.prepend(pool);
   }
 
   // Player tokens
