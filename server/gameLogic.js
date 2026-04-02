@@ -613,7 +613,7 @@ class GameRoom {
     if (!tile) return this.getState();
     if (this.propertyOwners[tileId] !== playerId) return this.getState();
     if (!this.mortgaged[tileId]) return this.getState();
-    const cost = Math.floor(tile.price / 2);
+    const cost = tile.price;
     if (player.money < cost) {
       this._addLog(`${player.name} can't afford to unmortgage ${tile.name} ($${cost}).`, 'money');
       return this.getState();

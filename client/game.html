@@ -16,21 +16,10 @@
   <!-- GAME LAYOUT -->
   <div id="gameLayout" class="game-layout" style="display:none;">
 
-    <!-- LEFT PANEL: Players -->
+    <!-- LEFT PANEL: Players + Chat -->
     <aside id="leftPanel" class="panel panel-left">
       <h2 class="panel-title">Players</h2>
       <div id="playerCards" class="player-cards"></div>
-    </aside>
-
-    <!-- CENTER: Board -->
-    <main class="board-wrapper">
-      <div id="board" class="board"></div>
-    </main>
-
-    <!-- RIGHT PANEL: Event Log + Chat -->
-    <aside id="rightPanel" class="panel panel-right">
-      <h2 class="panel-title">Event Log</h2>
-      <div id="eventLog" class="log-panel"></div>
       <div class="chat-section">
         <h2 class="panel-title" style="margin-bottom:4px;">Chat</h2>
         <div id="chatLog" class="chat-log"></div>
@@ -38,6 +27,20 @@
           <input id="chatInput" type="text" placeholder="Say something..." maxlength="200" />
           <button class="btn btn-small" onclick="sendChat()">Send</button>
         </div>
+      </div>
+    </aside>
+
+    <!-- CENTER: Board -->
+    <main class="board-wrapper">
+      <div id="board" class="board"></div>
+    </main>
+
+    <!-- RIGHT PANEL: Event Log -->
+    <aside id="rightPanel" class="panel panel-right">
+      <h2 class="panel-title">Event Log</h2>
+      <div id="eventLog" class="log-panel"></div>
+      <div class="right-panel-actions">
+        <button id="tradePanelBtn" class="btn btn-secondary right-panel-trade-btn" onclick="openTradeModal()">🤝 Trade</button>
       </div>
     </aside>
 
