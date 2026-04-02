@@ -5,14 +5,16 @@ const path = require('path');
 const BOARD = require('./boardData');
 
 const PLAYER_COLORS = [
-  '#7B1FA2',  // Deep Purple
-  '#006064',  // Dark Cyan/Teal
-  '#0288D1',  // Light Blue
-  '#FF6F00',  // Dark Amber
-  '#2E7D32',  // Dark Green
-  '#880E4F',  // Dark Pink/Maroon
-  '#37474F',  // Blue Grey
-  '#4527A0',  // Deep Indigo
+  '#7C4DFF',  // Electric Violet   — no board tile conflict
+  '#00BFA5',  // Teal               — distinct from board's bright cyan
+  '#FF6D00',  // Deep Orange        — richer than board's amber orange
+  '#1565C0',  // Navy Blue          — much darker than board's slate blue
+  '#2E7D32',  // Forest Green       — darker than board's medium green
+  '#AD1457',  // Berry              — deeper than board's hot pink
+  '#37474F',  // Slate Grey         — neutral, no conflict
+  '#4A148C',  // Dark Violet        — deep purple, no board tile
+  '#F5F5F5',  // Near White         — not on board
+  '#212121',  // Near Black         — not on board
 ];
 
 // ── Load configurable card decks from server/cardsConfig.json ──────
@@ -177,6 +179,10 @@ class GameRoom {
           player.inJail = false;
           player.jailTurns = 0;
           this._addLog(`${player.name} paid $50 after 3 turns in Jail.`, 'jail');
+          if (player.money < 0) {
+            this.eliminatePlayer(player);
+            return this.getState();
+          }
         } else {
           this._addLog(`${player.name} is still in Jail (turn ${player.jailTurns}/3).`, 'jail');
           this.turnPhase = 'end';
@@ -209,7 +215,11 @@ class GameRoom {
     const tile = BOARD[player.position];
 
     this.handleTile(player, tile);
-    this.turnPhase = isDouble ? 'roll' : 'action';
+    // Only update phase if the player didn't go bankrupt during handleTile.
+    // eliminatePlayer() already advances the turn and sets turnPhase = 'roll'.
+    if (!player.bankrupt) {
+      this.turnPhase = isDouble ? 'roll' : 'action';
+    }
 
     return this.getState();
   }
@@ -361,9 +371,8 @@ class GameRoom {
         const perPlayer = card.amount || 0;
         const total = perPlayer * activePlayers.length;
         player.money -= total;
-        if (this.rules.vacationCash) {
-          this.freeParkingPool += total;
-        }
+        // Note: pay_each is a player-to-player payment, not a bank payment,
+        // so it does NOT go to the free parking pool even when vacationCash is on.
         for (const p of activePlayers) p.money += perPlayer;
         this._addLog(`${player.name} paid $${perPlayer} to each player.`, 'money');
         if (player.money < 0 && !player.bankrupt) {
@@ -375,7 +384,12 @@ class GameRoom {
         const activePlayers = this.players.filter(p => !p.bankrupt && p.id !== player.id);
         const total = card.amount * activePlayers.length;
         player.money += total;
-        for (const p of activePlayers) p.money -= card.amount;
+        for (const p of activePlayers) {
+          p.money -= card.amount;
+          if (p.money < 0 && !p.bankrupt) {
+            this.eliminatePlayer(p);
+          }
+        }
         this._addLog(`${player.name} collected $${card.amount} from each player.`, 'money');
         break;
       }

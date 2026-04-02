@@ -17,8 +17,11 @@ let pendingRender  = null;
 
 // Color map for board property groups
 const COLOR_MAP = {
-  brown:'#8B4513', cyan:'#00BCD4', pink:'#E91E63', orange:'#FF9800',
-  red:'#F44336', yellow:'#FFC107', green:'#4CAF50', darkblue:'#1a237e'
+  brown:'#8B4513',    cyan:'#00BCD4',    pink:'#E91E63',   orange:'#FF9800',
+  red:'#F44336',      yellow:'#FFC107',  green:'#4CAF50',  darkblue:'#1a237e',
+  purple:'#9C27B0',   navy:'#1565C0',    teal:'#00ACC1',   lime:'#C6FF00',
+  maroon:'#C62828',   coral:'#FF7043',   gold:'#FFD54F',   violet:'#7E57C2',
+  indigo:'#5C6BC0',   emerald:'#26A69A', white:'#E0E0E0',  black:'#424242',
 };
 
 const BOARD_PATH_LENGTH = 44;
@@ -417,9 +420,9 @@ function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
   if (ownerId) {
     const owner = state.players.find(p => p.id === ownerId);
     if (owner) {
-      el.style.outline = `3px solid ${owner.color}`;
-      el.style.outlineOffset = '-2px';
-      el.style.boxShadow = `0 0 8px 2px ${owner.color}, inset 0 0 6px 1px ${owner.color}88`;
+      el.style.outline = `5px solid ${owner.color}`;
+      el.style.outlineOffset = '-3px';
+      el.style.boxShadow = `0 0 18px 5px ${owner.color}CC, 0 0 6px 2px ${owner.color}, inset 0 0 12px 3px ${owner.color}55`;
     }
   }
 

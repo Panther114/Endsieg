@@ -6,7 +6,7 @@
     "type":   "Tile type: 'go'|'jail'|'free_parking'|'go_to_jail'|'property'|'railroad'|'utility'|'chance'|'chest'|'tax'",
     "price":  "Purchase price (for property/railroad/utility).",
     "rent":   "[base, 1house, 2houses, 3houses, 4houses, hotel] rent values (for property).",
-    "color":  "Property color group: 'brown'|'cyan'|'pink'|'orange'|'red'|'yellow'|'green'|'darkblue'",
+    "color":  "Property color group: 'brown'|'cyan'|'pink'|'orange'|'red'|'yellow'|'green'|'darkblue'|'purple'|'navy'|'teal'|'lime'|'maroon'|'coral'|'gold'|'violet'|'indigo'|'emerald'|'white'|'black'",
     "group":  "Numeric group ID — tiles with same group form a monopoly set.",
     "cost":   "Amount paid when landing on a tax tile.",
     "reward": "Amount collected when landing on/passing GO."
