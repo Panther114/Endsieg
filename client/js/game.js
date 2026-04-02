@@ -268,7 +268,9 @@ function animateAndRender(state) {
     }
   }
 
-  // Animated overlay tokens for moving players — placed at their START position
+  // Animated overlay tokens for moving players — placed at their START position.
+  // The initial transform is committed with a forced reflow so the browser has a
+  // valid "from" state before the first CSS transition hop fires.
   const tokenEls = {};
   for (const p of movedPlayers) {
     const tok = createTokenEl(p);
@@ -278,6 +280,8 @@ function animateAndRender(state) {
 
   let step = 0;
 
+  // Wait one frame so the browser paints all starting positions before the first hop.
+  requestAnimationFrame(() => {
   const interval = setInterval(() => {
     if (step >= maxSteps) {
       clearInterval(interval);
@@ -307,7 +311,8 @@ function animateAndRender(state) {
       }
     }
     step++;
-  }, 120);
+  }, 380);
+  }); // end requestAnimationFrame
 }
 
 function createTokenEl(player) {
@@ -341,6 +346,17 @@ function placeTokenOnTile(tokenEl, tileId, animate) {
     if (!boardEl) return;
     if (tokenEl.parentElement !== boardEl) {
       boardEl.appendChild(tokenEl);
+      // Commit starting position immediately (no transition from nothing)
+      tokenEl.style.position      = 'absolute';
+      tokenEl.style.left          = '0';
+      tokenEl.style.top           = '0';
+      tokenEl.style.transform     = `translate(${pos.x - TOKEN_HALF_SIZE}px, ${pos.y - TOKEN_HALF_SIZE}px)`;
+      tokenEl.style.zIndex        = '20';
+      tokenEl.style.pointerEvents = 'none';
+      // Force the browser to flush layout so the starting transform is committed
+      // before any CSS transition can run.
+      void tokenEl.offsetWidth;
+      return;
     }
     tokenEl.style.position      = 'absolute';
     tokenEl.style.left          = '0';
