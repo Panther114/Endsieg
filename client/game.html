@@ -16,17 +16,10 @@
   <!-- GAME LAYOUT -->
   <div id="gameLayout" class="game-layout" style="display:none;">
 
-    <!-- LEFT PANEL: Players + Chat -->
+    <!-- LEFT PANEL: Players -->
     <aside id="leftPanel" class="panel panel-left">
       <h2 class="panel-title">Players</h2>
       <div id="playerCards" class="player-cards"></div>
-
-      <h2 class="panel-title" style="margin-top:12px;">Chat</h2>
-      <div id="chatLog" class="chat-log"></div>
-      <div class="chat-input-row">
-        <input id="chatInput" type="text" placeholder="Say something..." maxlength="200" />
-        <button class="btn btn-small" onclick="sendChat()">Send</button>
-      </div>
     </aside>
 
     <!-- CENTER: Board -->
@@ -34,10 +27,18 @@
       <div id="board" class="board"></div>
     </main>
 
-    <!-- RIGHT PANEL: Event Log -->
+    <!-- RIGHT PANEL: Event Log + Chat -->
     <aside id="rightPanel" class="panel panel-right">
       <h2 class="panel-title">Event Log</h2>
       <div id="eventLog" class="log-panel"></div>
+      <div class="chat-section">
+        <h2 class="panel-title" style="margin-bottom:4px;">Chat</h2>
+        <div id="chatLog" class="chat-log"></div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Say something..." maxlength="200" />
+          <button class="btn btn-small" onclick="sendChat()">Send</button>
+        </div>
+      </div>
     </aside>
 
   </div>
@@ -89,6 +90,7 @@
           <button class="btn btn-primary" onclick="submitTrade()">Send Offer</button>
           <button class="btn btn-secondary" onclick="closeTradeModal()">Cancel</button>
         </div>
+        <p id="tradeErrorMsg" style="color:#f87171;font-size:0.8rem;min-height:1em;"></p>
       </div>
     </div>
   </div>
@@ -101,6 +103,21 @@
       <div class="modal-actions">
         <button class="btn btn-primary" onclick="acceptTrade()">Accept</button>
         <button class="btn btn-secondary" onclick="declineTrade()">Decline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUCTION MODAL -->
+  <div id="auctionModal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h2 id="auctionTileName" style="font-family:'Cinzel',serif;color:var(--accent);font-size:1.2rem;"></h2>
+      <p style="color:var(--text-dim);font-size:0.82rem;">Price: $<span id="auctionTilePrice"></span></p>
+      <p style="color:var(--text-light);font-size:0.82rem;">Current highest bid: $<span id="auctionCurrentBid">0</span> by <span id="auctionCurrentBidder">—</span></p>
+      <p id="auctionStatus" style="color:var(--accent);font-size:0.78rem;min-height:1.2em;"></p>
+      <input type="number" id="auctionBidInput" min="1" placeholder="Your bid" />
+      <div class="modal-btn-row">
+        <button id="auctionBidBtn" class="btn btn-primary">Bid</button>
+        <button id="auctionPassBtn" class="btn btn-secondary">Pass</button>
       </div>
     </div>
   </div>

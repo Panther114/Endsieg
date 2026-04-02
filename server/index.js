@@ -12,7 +12,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-// Rate limit page requests to protect file system access
 const pageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,
@@ -20,10 +19,8 @@ const pageLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Serve static client files
 app.use(express.static(path.join(__dirname, '..', 'client')));
 
-// Explicit routes with rate limiting
 app.get('/', pageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'client', 'index.html'));
 });
@@ -61,7 +58,6 @@ io.on('connection', (socket) => {
       }
       resolvedColor = color;
     } else {
-      // Auto-assign first available palette color
       resolvedColor = PLAYER_COLORS.find(c => !takenColors.has(c)) || PLAYER_COLORS[0];
     }
 
@@ -73,14 +69,23 @@ io.on('connection', (socket) => {
     io.to(roomId.toUpperCase()).emit('room_updated', room.getState());
   });
 
-  socket.on('start_game', ({ roomId, startingFunds }) => {
+  socket.on('start_game', ({ roomId, startingFunds, rules }) => {
     const room = getRoom(roomId);
     if (!room) return socket.emit('error', { message: 'Room not found.' });
     if (room.hostId !== socket.id) return socket.emit('error', { message: 'Only host can start.' });
     if (room.players.length < 1) return socket.emit('error', { message: 'Need at least 1 player.' });
     const funds = (typeof startingFunds === 'number' && startingFunds >= 500 && startingFunds <= 10000)
       ? startingFunds : 1500;
-    room.start(funds);
+    // Sanitise rules object: only allow known boolean keys
+    let sanitisedRules = null;
+    if (rules && typeof rules === 'object') {
+      const allowed = ['doubleRentFullSet', 'vacationCash', 'auction', 'noRentInJail', 'mortgage', 'evenBuild'];
+      sanitisedRules = {};
+      for (const key of allowed) {
+        if (typeof rules[key] === 'boolean') sanitisedRules[key] = rules[key];
+      }
+    }
+    room.start(funds, sanitisedRules);
     io.to(roomId).emit('game_started', room.getState());
   });
 
@@ -96,6 +101,47 @@ io.on('connection', (socket) => {
     if (!room || !room.started) return;
     const state = room.buyProperty(socket.id);
     io.to(roomId).emit('game_updated', state);
+  });
+
+  socket.on('skip_buy', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const { state, auctionInfo } = room.skipBuy(socket.id);
+    io.to(roomId).emit('game_updated', state);
+    if (auctionInfo) {
+      io.to(roomId).emit('auction_started', auctionInfo);
+    }
+  });
+
+  socket.on('place_bid', ({ roomId, tileId, amount }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const prevAuction = room.auctionState;
+    const state = room.placeBid(socket.id, tileId, amount);
+    io.to(roomId).emit('game_updated', state);
+    // If auction ended (auctionState cleared), emit auction_ended
+    if (prevAuction && !room.auctionState) {
+      const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
+      io.to(roomId).emit('auction_ended', {
+        tileName: prevAuction.tileName,
+        winner: winnerPlayer ? { name: winnerPlayer.name, amount } : null
+      });
+    }
+  });
+
+  socket.on('pass_bid', ({ roomId, tileId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const prevAuction = room.auctionState;
+    const state = room.passBid(socket.id, tileId);
+    io.to(roomId).emit('game_updated', state);
+    if (prevAuction && !room.auctionState) {
+      const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
+      io.to(roomId).emit('auction_ended', {
+        tileName: prevAuction.tileName,
+        winner: winnerPlayer ? { name: winnerPlayer.name } : null
+      });
+    }
   });
 
   socket.on('build_house', ({ roomId, tileId }) => {
@@ -119,10 +165,23 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('game_updated', state);
   });
 
+  socket.on('mortgage_property', ({ roomId, tileId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const state = room.mortgageProperty(socket.id, tileId);
+    io.to(roomId).emit('game_updated', state);
+  });
+
+  socket.on('unmortgage_property', ({ roomId, tileId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const state = room.unmortgageProperty(socket.id, tileId);
+    io.to(roomId).emit('game_updated', state);
+  });
+
   socket.on('trade_offer', ({ roomId, toId, offer }) => {
     const room = getRoom(roomId);
     if (!room || !room.started) return;
-    // Broadcast trade proposal to target
     io.to(roomId).emit('trade_proposed', {
       fromId: socket.id,
       toId,
@@ -138,6 +197,33 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('game_updated', state);
   });
 
+  socket.on('vote_kick', ({ roomId, targetId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const result = room.voteKick(socket.id, targetId);
+    if (result && result.kicked) {
+      io.to(roomId).emit('player_kicked', { playerName: result.playerName });
+    }
+    io.to(roomId).emit('game_updated', room.getState());
+  });
+
+  socket.on('undo_vote_kick', ({ roomId, targetId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    room.undoVoteKick(socket.id, targetId);
+    io.to(roomId).emit('game_updated', room.getState());
+  });
+
+  socket.on('quit_game', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const playerName = room.removePlayerFromGame(socket.id);
+    if (playerName) {
+      io.to(roomId).emit('player_left', { playerName });
+    }
+    io.to(roomId).emit('game_updated', room.getState());
+  });
+
   socket.on('request_game_state', ({ roomId, playerName }) => {
     if (!roomId) return socket.emit('error', { message: 'Room ID is required.' });
     const room = getRoom(roomId.toUpperCase());
@@ -146,33 +232,35 @@ io.on('connection', (socket) => {
     }
 
     if (room.started) {
-      // Find a matching player by name (for reconnect after redirect)
       const name = (playerName || '').toLowerCase().trim();
       const existingPlayer = room.players.find(p => p.name.toLowerCase() === name);
       if (existingPlayer) {
-        // Update their socket ID to the new one
         const oldId = existingPlayer.id;
         existingPlayer.id = socket.id;
-        // Update propertyOwners map
         for (const tileId of Object.keys(room.propertyOwners)) {
           if (room.propertyOwners[tileId] === oldId) {
             room.propertyOwners[tileId] = socket.id;
           }
         }
-        // Update hostId if needed
         if (room.hostId === oldId) room.hostId = socket.id;
-        // Clean up old socket mapping before adding the new one
+        // Update kickVotes references
+        for (const targetId of Object.keys(room.kickVotes)) {
+          room.kickVotes[targetId] = room.kickVotes[targetId].map(id => id === oldId ? socket.id : id);
+        }
+        if (room.kickVotes[oldId]) {
+          room.kickVotes[socket.id] = room.kickVotes[oldId];
+          delete room.kickVotes[oldId];
+        }
         removeSocketMapping(oldId);
         addSocketToRoom(socket.id, roomId.toUpperCase());
         socket.join(roomId.toUpperCase());
-        // Cancel any pending disconnect grace timer for this player
         cancelGraceTimer(roomId.toUpperCase(), existingPlayer.name);
+        // Only send current state — no game logic triggered
         socket.emit('game_updated', room.getState());
       } else {
         socket.emit('error', { message: 'Game already started without you.' });
       }
     } else {
-      // Game not yet started — re-join socket to room and send room state
       addSocketToRoom(socket.id, roomId.toUpperCase());
       socket.join(roomId.toUpperCase());
       socket.emit('room_updated', room.getState());

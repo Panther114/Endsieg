@@ -27,14 +27,16 @@
       <div class="form-group">
         <label>Choose Your Color</label>
         <div id="colorPicker" class="color-picker">
-          <button type="button" class="color-swatch selected" data-color="#7B1FA2" style="background:#7B1FA2;" title="Deep Purple" aria-label="Deep Purple"></button>
-          <button type="button" class="color-swatch" data-color="#006064" style="background:#006064;" title="Dark Teal" aria-label="Dark Teal"></button>
-          <button type="button" class="color-swatch" data-color="#0288D1" style="background:#0288D1;" title="Light Blue" aria-label="Light Blue"></button>
-          <button type="button" class="color-swatch" data-color="#FF6F00" style="background:#FF6F00;" title="Dark Amber" aria-label="Dark Amber"></button>
-          <button type="button" class="color-swatch" data-color="#2E7D32" style="background:#2E7D32;" title="Dark Green" aria-label="Dark Green"></button>
-          <button type="button" class="color-swatch" data-color="#880E4F" style="background:#880E4F;" title="Dark Pink" aria-label="Dark Pink"></button>
-          <button type="button" class="color-swatch" data-color="#37474F" style="background:#37474F;" title="Blue Grey" aria-label="Blue Grey"></button>
-          <button type="button" class="color-swatch" data-color="#4527A0" style="background:#4527A0;" title="Deep Indigo" aria-label="Deep Indigo"></button>
+          <button type="button" class="color-swatch selected" data-color="#7C4DFF" style="background:#7C4DFF;" title="Electric Violet" aria-label="Electric Violet"></button>
+          <button type="button" class="color-swatch" data-color="#00BFA5" style="background:#00BFA5;" title="Teal" aria-label="Teal"></button>
+          <button type="button" class="color-swatch" data-color="#FF6D00" style="background:#FF6D00;" title="Deep Orange" aria-label="Deep Orange"></button>
+          <button type="button" class="color-swatch" data-color="#1565C0" style="background:#1565C0;" title="Navy Blue" aria-label="Navy Blue"></button>
+          <button type="button" class="color-swatch" data-color="#2E7D32" style="background:#2E7D32;" title="Forest Green" aria-label="Forest Green"></button>
+          <button type="button" class="color-swatch" data-color="#AD1457" style="background:#AD1457;" title="Berry" aria-label="Berry"></button>
+          <button type="button" class="color-swatch" data-color="#37474F" style="background:#37474F;" title="Slate Grey" aria-label="Slate Grey"></button>
+          <button type="button" class="color-swatch" data-color="#4A148C" style="background:#4A148C;" title="Dark Violet" aria-label="Dark Violet"></button>
+          <button type="button" class="color-swatch" data-color="#F5F5F5" style="background:#F5F5F5;" title="White" aria-label="White"></button>
+          <button type="button" class="color-swatch" data-color="#212121" style="background:#212121;border-color:rgba(255,255,255,0.3);" title="Black" aria-label="Black"></button>
         </div>
       </div>
 
@@ -67,6 +69,15 @@
         <div class="form-group" style="margin-bottom:8px;">
           <label for="startingFunds">Starting Funds</label>
           <input id="startingFunds" type="number" min="500" max="10000" value="1500" step="100" />
+        </div>
+        <div id="gameRulesPanel" class="game-rules-panel">
+          <h3>Game Rules</h3>
+          <label><input type="checkbox" id="rule-doubleRentFullSet" checked> Double Rent on Full Set</label>
+          <label><input type="checkbox" id="rule-vacationCash"> Vacation Cash (Free Parking Pool)</label>
+          <label><input type="checkbox" id="rule-auction"> Auction on Skip</label>
+          <label><input type="checkbox" id="rule-noRentInJail" checked> No Rent While in Jail</label>
+          <label><input type="checkbox" id="rule-mortgage" checked> Mortgage Properties</label>
+          <label><input type="checkbox" id="rule-evenBuild" checked> Even Build Rule</label>
         </div>
         <button class="btn btn-primary btn-large" onclick="startGame()">
           ▶ Start Game

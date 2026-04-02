@@ -1,10 +1,21 @@
 {
-  "_comment": "Configurable Chance and Community Chest card decks for Endsieg. Remove or replace entries freely. Supported actions are listed in _schema.",
+  "_comment": "Configurable Chance and Community Chest card decks for Endsieg. Edit freely — changes take effect on the next server restart. Remove or add entries as needed. The full set of supported actions is listed in _schema.",
   "_schema": {
     "text":   "Message displayed in the event log when the card is drawn.",
     "action": "Card effect: 'collect' | 'pay' | 'advance_to' | 'go_to_jail' | 'move_back' | 'nearest_railroad' | 'jail_free' | 'pay_each' | 'collect_each'",
-    "amount": "Currency amount — used with 'collect', 'pay', 'pay_each', 'collect_each'.",
-    "target": "Tile id to move to — used with 'advance_to'."
+    "amount": "Currency amount — used with 'collect', 'pay', 'pay_each', 'collect_each', 'move_back'.",
+    "target": "Tile id to move to — used with 'advance_to'.",
+    "_actions": {
+      "collect":         "Player receives 'amount' from the bank.",
+      "pay":             "Player pays 'amount' to the bank (goes to Free Parking pool when Vacation Cash rule is on).",
+      "advance_to":      "Move player to tile 'target'; collect $200 if passing GO.",
+      "go_to_jail":      "Send player to Jail immediately.",
+      "move_back":       "Move player back 'amount' spaces (can trigger the new tile's effect).",
+      "nearest_railroad":"Advance to the nearest railroad tile; collect $200 if passing GO.",
+      "jail_free":       "Player receives a Get Out of Jail Free card (stored for future use).",
+      "pay_each":        "Player pays 'amount' to every other active player.",
+      "collect_each":    "Player collects 'amount' from every other active player."
+    }
   },
   "chanceCards": [
     { "text": "Advance to GO. Collect $200.",        "action": "advance_to",       "target": 0   },

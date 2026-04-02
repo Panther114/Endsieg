@@ -9,7 +9,7 @@ let myRoomId     = null;
 let myPlayerName = '';
 let isHost       = false;
 let roomState    = null;
-let selectedColor = '#7B1FA2'; // default to first color
+let selectedColor = '#7C4DFF'; // default to first color
 
 // ── COLOR PICKER ─────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ function showRoomInfo(state) {
   const weOwnIt = myEntry && myEntry.id === mySocketId;
   if (myEntry && !weOwnIt) {
     // Our color is taken — pick the first available one
-    const allColors = ['#7B1FA2','#006064','#0288D1','#FF6F00','#2E7D32','#880E4F','#37474F','#4527A0'];
+    const allColors = ['#7C4DFF','#00BFA5','#FF6D00','#1565C0','#2E7D32','#AD1457','#37474F','#4A148C','#F5F5F5','#212121'];
     const available = allColors.find(c => !takenColors.includes(c.toLowerCase()));
     if (available) selectedColor = available;
   }
@@ -138,7 +138,15 @@ function startGame() {
   if (!myRoomId) return;
   const fundsEl = document.getElementById('startingFunds');
   const startingFunds = fundsEl ? parseInt(fundsEl.value) || 1500 : 1500;
-  socket.emit('start_game', { roomId: myRoomId, startingFunds });
+  const rules = {
+    doubleRentFullSet: document.getElementById('rule-doubleRentFullSet')?.checked ?? true,
+    vacationCash:      document.getElementById('rule-vacationCash')?.checked ?? false,
+    auction:           document.getElementById('rule-auction')?.checked ?? false,
+    noRentInJail:      document.getElementById('rule-noRentInJail')?.checked ?? true,
+    mortgage:          document.getElementById('rule-mortgage')?.checked ?? true,
+    evenBuild:         document.getElementById('rule-evenBuild')?.checked ?? true
+  };
+  socket.emit('start_game', { roomId: myRoomId, startingFunds, rules });
 }
 
 // Expose to HTML onclick

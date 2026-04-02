@@ -82,9 +82,9 @@
 }
 
 .tile:hover {
-  background: #1a1e2a;
-  box-shadow: inset 0 0 0 1px var(--accent), 0 0 8px rgba(201,168,76,0.2);
-  transform: scale(1.02);
+  background: #1c2132;
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 12px rgba(201,168,76,0.25);
+  transform: scale(1.025);
   z-index: 10;
 }
 
@@ -147,6 +147,20 @@
 .band-yellow   { background: linear-gradient(135deg, #ffca28, #ff8f00); }
 .band-green    { background: linear-gradient(135deg, #66bb6a, #2e7d32); }
 .band-darkblue { background: linear-gradient(135deg, #5c6bc0, #1a237e); }
+
+/* Extended color palette */
+.band-purple   { background: linear-gradient(135deg, #ab47bc, #6a1b9a); }
+.band-navy     { background: linear-gradient(135deg, #1976d2, #0d47a1); }
+.band-teal     { background: linear-gradient(135deg, #26c6da, #006064); }
+.band-lime     { background: linear-gradient(135deg, #d4e157, #9e9d24); }
+.band-maroon   { background: linear-gradient(135deg, #e53935, #7f0000); }
+.band-coral    { background: linear-gradient(135deg, #ff7043, #bf360c); }
+.band-gold     { background: linear-gradient(135deg, #ffd54f, #f9a825); }
+.band-violet   { background: linear-gradient(135deg, #9575cd, #4527a0); }
+.band-indigo   { background: linear-gradient(135deg, #7986cb, #283593); }
+.band-emerald  { background: linear-gradient(135deg, #26a69a, #00695c); }
+.band-white    { background: linear-gradient(135deg, #eeeeee, #9e9e9e); }
+.band-black    { background: linear-gradient(135deg, #616161, #212121); }
 
 /* ── PRICE INSIDE BAND ── */
 .tile-price-band {
@@ -280,15 +294,15 @@
 }
 
 /* ── SPECIAL TILE TYPES ── */
-.tile-go         { background: #0d1a0f; }
-.tile-jail       { background: #1a140d; }
-.tile-go_to_jail { background: #1a0d0d; }
-.tile-free_parking { background: #0d1a17; }
-.tile-chance     { background: #13121a; }
-.tile-chest      { background: #0f1520; }
-.tile-tax        { background: #170f0f; }
-.tile-railroad   { background: #111519; }
-.tile-utility    { background: #0f1318; }
+.tile-go         { background: linear-gradient(135deg, #0d1a0f, #0a1a10); }
+.tile-jail       { background: linear-gradient(135deg, #1a140d, #18120a); }
+.tile-go_to_jail { background: linear-gradient(135deg, #1a0d0d, #180a0a); }
+.tile-free_parking { background: linear-gradient(135deg, #0d1a17, #0a1815); }
+.tile-chance     { background: linear-gradient(135deg, #13121a, #100f18); }
+.tile-chest      { background: linear-gradient(135deg, #0f1520, #0c121e); }
+.tile-tax        { background: linear-gradient(135deg, #170f0f, #150c0c); }
+.tile-railroad   { background: linear-gradient(135deg, #111519, #0e1217); }
+.tile-utility    { background: linear-gradient(135deg, #0f1318, #0c1016); }
 
 /* ── HOUSE / HOTEL ICONS ON COLOR BAND ── */
 .house-icon, .hotel-icon {
@@ -320,9 +334,18 @@
   font-size: 11px;
   font-weight: 900;
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 12px var(--token-color, currentColor);
+  text-shadow: 0 1px 3px rgba(0,0,0,1);
+  box-shadow:
+    0 3px 10px rgba(0,0,0,0.9),
+    0 0 14px var(--token-color, currentColor),
+    inset 0 1px 0 rgba(255,255,255,0.2);
   flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.player-token:hover {
+  transform: scale(1.15);
+  z-index: 10;
 }
 
 /* ── BOARD CENTER ACTIONS ── */
@@ -386,11 +409,11 @@
 .turn-indicator-bar {
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 4px;
+  height: 5px;
   transition: background 0.4s;
-  opacity: 0.9;
+  opacity: 0.92;
   z-index: 2;
-  box-shadow: 0 0 8px currentColor;
+  box-shadow: 0 0 12px currentColor, 0 1px 6px rgba(0,0,0,0.4);
 }
 
 /* ── CENTER TITLE ── */
@@ -438,16 +461,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #1a1e2a;
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(145deg, #1e2336, #131826);
   color: var(--accent);
-  border: 2px solid var(--accent);
-  border-radius: 6px;
+  border: 2px solid rgba(201,168,76,0.7);
+  border-radius: 8px;
   font-family: 'Cinzel', serif;
   font-size: 18px;
   font-weight: 900;
-  box-shadow: 0 0 10px rgba(201,168,76,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow:
+    0 0 12px rgba(201,168,76,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.4);
 }
 
 .die.rolling {
@@ -495,39 +521,42 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
+  padding: 6px 11px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   font-size: clamp(9px, 1.2vw, 11px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
   min-height: 28px;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-center-action:hover {
   transform: translateY(-1px);
-  filter: brightness(1.12);
+  filter: brightness(1.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .btn-center-roll  {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), #b8943e);
   color: #0a0c10;
-  box-shadow: 0 0 12px rgba(201,168,76,0.4);
+  box-shadow: 0 0 14px rgba(201,168,76,0.45);
 }
 .btn-center-roll:hover {
-  background: #e0bc60;
-  box-shadow: 0 0 20px rgba(201,168,76,0.7);
+  background: linear-gradient(135deg, #e0bc60, var(--accent));
+  box-shadow: 0 0 22px rgba(201,168,76,0.75);
 }
-.btn-center-buy   { background: #1a6e3c; color: #a8f5c8; border: 1px solid #2ecc71; }
-.btn-center-build { background: #1a3a6e; color: #a8c5f5; border: 1px solid #3498db; }
-.btn-center-pay   { background: #6e1a1a; color: #f5a8a8; border: 1px solid #e74c3c; }
-.btn-center-end   { background: #2a2a2a; color: #aaa;    border: 1px solid #444; }
-.btn-center-trade { background: #1a3a2a; color: #a8f5d8; border: 1px solid #2ecc8a; }
+.btn-center-buy   { background: linear-gradient(135deg, #1e7d42, #155a30); color: #a8f5c8; border: 1px solid #2ecc71; box-shadow: 0 0 8px rgba(46,204,113,0.2); }
+.btn-center-build { background: linear-gradient(135deg, #1e426e, #142e52); color: #a8c5f5; border: 1px solid #3498db; box-shadow: 0 0 8px rgba(52,152,219,0.2); }
+.btn-center-pay   { background: linear-gradient(135deg, #7d1e1e, #5a1515); color: #f5a8a8; border: 1px solid #e74c3c; box-shadow: 0 0 8px rgba(231,76,60,0.2); }
+.btn-center-end   { background: linear-gradient(135deg, #2a2a2a, #1e1e1e); color: #aaa; border: 1px solid #444; }
+.btn-center-trade { background: linear-gradient(135deg, #1e3e2e, #152d20); color: #a8f5d8; border: 1px solid #2ecc8a; box-shadow: 0 0 8px rgba(46,204,138,0.15); }
 
 /* ── ACTIVE TILE HIGHLIGHT ── */
 .tile.current-player-tile {
