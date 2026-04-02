@@ -455,14 +455,29 @@ function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
       cost.textContent = `Pay $${tile.cost}`;
       el.appendChild(cost);
     }
-    // Free Parking pool display
-    if (tile.type === 'free_parking' && state.freeParkingPool > 0) {
-      const pool = document.createElement('div');
-      pool.className = 'tile-price';
-      pool.style.color = '#fbbf24';
-      pool.textContent = `$${state.freeParkingPool}`;
-      el.appendChild(pool);
+
+    // Surprise (S) badge for chance tiles
+    if (tile.type === 'chance') {
+      const badge = document.createElement('span');
+      badge.className = 'tile-special-badge tile-badge-s';
+      badge.textContent = 'S';
+      el.appendChild(badge);
     }
+    // Reward (R) badge for chest tiles
+    if (tile.type === 'chest') {
+      const badge = document.createElement('span');
+      badge.className = 'tile-special-badge tile-badge-r';
+      badge.textContent = 'R';
+      el.appendChild(badge);
+    }
+  }
+
+  // Free Parking pool display (applies to corner tile too)
+  if (tile.type === 'free_parking' && state.freeParkingPool > 0) {
+    const pool = document.createElement('div');
+    pool.className = 'free-parking-pool';
+    pool.textContent = `$${state.freeParkingPool}`;
+    el.appendChild(pool);
   }
 
   // Player tokens
@@ -571,13 +586,28 @@ function updateBoardCenter(state, centerEl) {
     if (phase === 'action') {
       const tile = state.board && state.board[myPlayer.position];
       const owned = state.propertyOwners && state.propertyOwners[myPlayer.position];
-      if (tile && ['property','railroad','utility'].includes(tile.type) && !owned && myPlayer.money >= tile.price) {
-        btnRow.appendChild(makeCenterBtn('💰 Buy', 'buy', buyProperty));
-        // Skip button (auction or just skip)
-        const skipBtn = makeCenterBtn('⏭ Skip', 'skip', skipBuy);
-        btnRow.appendChild(skipBtn);
-      }
+      const isPurchasable = tile && ['property','railroad','utility'].includes(tile.type) && !owned;
 
+      if (isPurchasable) {
+        // Show Buy (if affordable) and Skip — never show End Turn here
+        if (myPlayer.money >= tile.price) {
+          btnRow.appendChild(makeCenterBtn('💰 Buy', 'buy', buyProperty));
+        }
+        btnRow.appendChild(makeCenterBtn('⏭ Skip', 'skip', skipBuy));
+      } else {
+        // Non-purchasable or already owned — show Build + End Turn
+        const canBuild = myPlayer.properties.some(pid => {
+          const t = state.board && state.board[pid];
+          if (!t || t.type !== 'property') return false;
+          const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
+          return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
+        });
+        if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+        btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
+      }
+    }
+
+    if (phase === 'end') {
       const canBuild = myPlayer.properties.some(pid => {
         const t = state.board && state.board[pid];
         if (!t || t.type !== 'property') return false;
@@ -585,15 +615,18 @@ function updateBoardCenter(state, centerEl) {
         return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
       });
       if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
-
-      btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
-    }
-
-    if (phase === 'end') {
       btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
     }
 
     el.appendChild(btnRow);
+  }
+
+  // Declare Bankruptcy button — shown to local player when their money is negative
+  if (myPlayer && !myPlayer.bankrupt && myPlayer.money < 0) {
+    const bankruptRow = document.createElement('div');
+    bankruptRow.className = 'center-btn-row';
+    bankruptRow.appendChild(makeCenterBtn('💀 Declare Bankruptcy', 'pay', declareBankruptcy));
+    el.appendChild(bankruptRow);
   }
 
   // Show auction phase info
@@ -927,17 +960,19 @@ function sendChat() {
 window.sendChat = sendChat;
 
 // ── GAME ACTIONS ───────────────────────────────────────────────────
-function rollDice()    { if (roomId) socket.emit('roll_dice',    { roomId }); }
-function buyProperty() { if (roomId) socket.emit('buy_property', { roomId }); }
-function skipBuy()     { if (roomId) socket.emit('skip_buy',     { roomId }); }
-function endTurn()     { if (roomId) socket.emit('end_turn',     { roomId }); }
-function payJail()     { if (roomId) socket.emit('pay_jail',     { roomId }); }
+function rollDice()         { if (roomId) socket.emit('roll_dice',          { roomId }); }
+function buyProperty()      { if (roomId) socket.emit('buy_property',       { roomId }); }
+function skipBuy()          { if (roomId) socket.emit('skip_buy',           { roomId }); }
+function endTurn()          { if (roomId) socket.emit('end_turn',           { roomId }); }
+function payJail()          { if (roomId) socket.emit('pay_jail',           { roomId }); }
+function declareBankruptcy(){ if (roomId) socket.emit('declare_bankruptcy', { roomId }); }
 
-window.rollDice    = rollDice;
-window.buyProperty = buyProperty;
-window.skipBuy     = skipBuy;
-window.endTurn     = endTurn;
-window.payJail     = payJail;
+window.rollDice         = rollDice;
+window.buyProperty      = buyProperty;
+window.skipBuy          = skipBuy;
+window.endTurn          = endTurn;
+window.payJail          = payJail;
+window.declareBankruptcy = declareBankruptcy;
 
 // ── BUILD MODAL ────────────────────────────────────────────────────
 function openBuildModal() {

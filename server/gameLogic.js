@@ -179,10 +179,6 @@ class GameRoom {
           player.inJail = false;
           player.jailTurns = 0;
           this._addLog(`${player.name} paid $50 after 3 turns in Jail.`, 'jail');
-          if (player.money < 0) {
-            this.eliminatePlayer(player);
-            return this.getState();
-          }
         } else {
           this._addLog(`${player.name} is still in Jail (turn ${player.jailTurns}/3).`, 'jail');
           this.turnPhase = 'end';
@@ -239,9 +235,6 @@ class GameRoom {
         if (this.rules.vacationCash) {
           this.freeParkingPool += cost;
         }
-        if (player.money < 0 && !player.bankrupt) {
-          this.eliminatePlayer(player);
-        }
         break;
       }
 
@@ -281,9 +274,6 @@ class GameRoom {
             player.money -= rent;
             owner.money += rent;
             this._addLog(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}.`, 'money');
-            if (player.money < 0 && !player.bankrupt) {
-              this.eliminatePlayer(player);
-            }
           }
         }
         break;
@@ -323,9 +313,6 @@ class GameRoom {
         player.money -= amount;
         if (this.rules.vacationCash) {
           this.freeParkingPool += amount;
-        }
-        if (player.money < 0 && !player.bankrupt) {
-          this.eliminatePlayer(player);
         }
         break;
       }
@@ -375,9 +362,6 @@ class GameRoom {
         // so it does NOT go to the free parking pool even when vacationCash is on.
         for (const p of activePlayers) p.money += perPlayer;
         this._addLog(`${player.name} paid $${perPlayer} to each player.`, 'money');
-        if (player.money < 0 && !player.bankrupt) {
-          this.eliminatePlayer(player);
-        }
         break;
       }
       case 'collect_each': {
@@ -386,9 +370,6 @@ class GameRoom {
         player.money += total;
         for (const p of activePlayers) {
           p.money -= card.amount;
-          if (p.money < 0 && !p.bankrupt) {
-            this.eliminatePlayer(p);
-          }
         }
         this._addLog(`${player.name} collected $${card.amount} from each player.`, 'money');
         break;
@@ -501,22 +482,18 @@ class GameRoom {
   endTurn(playerId) {
     const player = this.getCurrentPlayer();
     if (!player || player.id !== playerId) return this.getState();
-    if (player.money < 0) {
-      this.eliminatePlayer(player);
-    } else {
-      const activePlayers = this.players.filter(p => !p.bankrupt);
-      const activeCount = activePlayers.length;
-      if (activeCount > 0) {
+    const activePlayers = this.players.filter(p => !p.bankrupt);
+    const activeCount = activePlayers.length;
+    if (activeCount > 0) {
+      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+      let safety = 0;
+      while (this.players[this.currentPlayerIndex].bankrupt && safety < this.players.length) {
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        let safety = 0;
-        while (this.players[this.currentPlayerIndex].bankrupt && safety < this.players.length) {
-          this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-          safety++;
-        }
+        safety++;
       }
-      this.turnPhase = 'roll';
-      this._doubleCount = 0;
     }
+    this.turnPhase = 'roll';
+    this._doubleCount = 0;
     return this.getState();
   }
 
@@ -707,7 +684,7 @@ class GameRoom {
 
   skipBuy(playerId) {
     const player = this.getCurrentPlayer();
-    if (!player || player.id !== playerId) return this.getState();
+    if (!player || player.id !== playerId) return { state: this.getState(), auctionInfo: null };
     if (this.rules.auction) {
       const tile = BOARD[player.position];
       if (tile && ['property', 'railroad', 'utility'].includes(tile.type) && !this.propertyOwners[tile.id]) {
@@ -715,6 +692,7 @@ class GameRoom {
         return { state: this.getState(), auctionInfo };
       }
     }
+    this.turnPhase = 'end';
     return { state: this.getState(), auctionInfo: null };
   }
 

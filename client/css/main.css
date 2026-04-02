@@ -48,7 +48,7 @@ html, body {
   position: relative;
 }
 
-/* ── Layer 1: slow-drifting aurora blobs ── */
+/* ── Layer 1: aurora blobs — static for performance ── */
 body::before {
   content: '';
   position: fixed;
@@ -58,12 +58,11 @@ body::before {
     radial-gradient(ellipse 55% 70% at 85% 15%, rgba(130,0,255,0.06) 0%, transparent 55%),
     radial-gradient(ellipse 60% 40% at 50% 85%, rgba(0,220,180,0.05) 0%, transparent 55%),
     radial-gradient(ellipse 40% 60% at 70% 55%, rgba(255,80,0,0.03) 0%, transparent 50%);
-  animation: body-aurora 14s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
 }
 
-/* ── Layer 2: fine diagonal grid shimmer ── */
+/* ── Layer 2: fine diagonal grid shimmer — static for performance ── */
 body::after {
   content: '';
   position: fixed;
@@ -72,7 +71,6 @@ body::after {
     linear-gradient(rgba(201,168,76,0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(201,168,76,0.018) 1px, transparent 1px);
   background-size: 48px 48px;
-  animation: grid-drift 20s linear infinite;
   pointer-events: none;
   z-index: 0;
   opacity: 0.6;
@@ -449,14 +447,14 @@ body.game-page {
 }
 
 /* ── PLAYER CARDS ── */
-.player-cards { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; min-height: 0; }
+.player-cards { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; min-height: 0; }
 
 .player-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
   border-left: 2px solid transparent;
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 5px 7px;
   transition: all 0.2s;
 }
 
@@ -480,15 +478,15 @@ body.game-page {
 .player-card-header {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 3px;
+  gap: 5px;
+  margin-bottom: 2px;
 }
 
 .player-token-sm {
-  width: 20px; height: 20px;
+  width: 17px; height: 17px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.58rem;
+  font-size: 0.5rem;
   font-weight: 700;
   color: #fff;
   flex-shrink: 0;
@@ -496,7 +494,7 @@ body.game-page {
 }
 
 .player-name-sm {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -505,14 +503,14 @@ body.game-page {
 
 .player-money {
   font-family: 'Rajdhani', sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   color: #4ade80;
   text-shadow: 0 0 6px rgba(74,222,128,0.35);
 }
 
 .player-props {
-  font-size: 0.66rem;
+  font-size: 0.60rem;
   color: var(--text-muted);
 }
 
@@ -574,17 +572,17 @@ body.game-page {
 
 .chat-log {
   overflow-y: auto;
-  font-size: 0.68rem;
-  line-height: 1.5;
-  height: 120px;
-  max-height: 120px;
+  font-size: 10px;
+  line-height: 1.2;
+  height: 160px;
+  max-height: 160px;
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 5px 7px;
   background: rgba(0,0,0,0.2);
 }
 
-.chat-log p { margin-bottom: 3px; }
+.chat-log p { margin-bottom: 1px; padding: 2px 4px; }
 .chat-log b { color: var(--gold); }
 
 .chat-input-row {
@@ -595,7 +593,7 @@ body.game-page {
 .chat-input-row input {
   flex: 1;
   padding: 6px 9px;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
 }
 
 /* ── RIGHT PANEL ACTIONS ── */
@@ -849,6 +847,10 @@ body.game-page {
   background: transparent;
 }
 
+/* GPU-composited layers for the board and its center panel */
+.board-wrapper .board { transform: translateZ(0); }
+.board-wrapper .board-center-actions { transform: translateZ(0); }
+
 /* ── SCROLLBARS ── */
 ::-webkit-scrollbar { width: 4px; background: transparent; }
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
@@ -1057,6 +1059,7 @@ body.game-page {
   transition: none;
   z-index: 20;
   box-shadow: 0 0 14px 4px rgba(255,255,255,0.5), 0 2px 8px rgba(0,0,0,0.9);
+  will-change: transform;
 }
 
 /* ── CENTER SKIP BUTTON ── */

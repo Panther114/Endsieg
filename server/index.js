@@ -214,6 +214,15 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('game_updated', room.getState());
   });
 
+  socket.on('declare_bankruptcy', ({ roomId }) => {
+    const room = getRoom(roomId);
+    if (!room || !room.started) return;
+    const player = room.players.find(p => p.id === socket.id);
+    if (!player || player.bankrupt) return;
+    room.eliminatePlayer(player);
+    io.to(roomId).emit('game_updated', room.getState());
+  });
+
   socket.on('quit_game', ({ roomId }) => {
     const room = getRoom(roomId);
     if (!room || !room.started) return;
