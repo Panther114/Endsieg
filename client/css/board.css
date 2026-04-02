@@ -37,7 +37,7 @@
     inset 0 0 40px rgba(0,0,0,0.6),
     0 0 0 1px rgba(201,168,76,0.08);
   position: relative;
-  animation: board-glow-pulse 5s ease-in-out infinite alternate;
+  /* animation removed for performance — static box-shadow kept */
 }
 
 @keyframes board-glow-pulse {
@@ -79,6 +79,7 @@
   color: var(--text-light);
   padding: 2px;
   transition: all 0.2s ease;
+  contain: layout style;
 }
 
 .tile:hover {
@@ -341,6 +342,7 @@
     inset 0 1px 0 rgba(255,255,255,0.2);
   flex-shrink: 0;
   transition: transform 0.15s ease;
+  will-change: transform;
 }
 
 .player-token:hover {
@@ -383,7 +385,7 @@
   100% { background-position: 22px 22px; }
 }
 
-/* Shifting multi-colour aurora layer */
+/* Shifting multi-colour aurora layer — static for performance */
 .board-center-actions::after {
   content: '';
   position: absolute;
@@ -393,7 +395,6 @@
     radial-gradient(ellipse 45% 65% at 25% 75%, rgba(160,0,255,0.07) 0%, transparent 60%),
     radial-gradient(ellipse 55% 35% at 75% 25%, rgba(0,255,140,0.06) 0%, transparent 60%),
     radial-gradient(ellipse 40% 50% at 80% 70%, rgba(255,120,0,0.04) 0%, transparent 55%);
-  animation: center-aurora 8s ease-in-out infinite alternate;
   pointer-events: none;
   z-index: 0;
 }
@@ -478,6 +479,7 @@
 
 .die.rolling {
   animation: roll-anim 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
 
 @keyframes roll-anim {
@@ -590,4 +592,40 @@
 @keyframes flash-red {
   0%   { color: #f87171; text-shadow: 0 0 10px #f87171; }
   100% { color: #f87171; text-shadow: none; }
+}
+
+/* ── FREE PARKING POOL DISPLAY ── */
+.free-parking-pool {
+  font-size: clamp(5px, 0.7vw, 9px);
+  color: var(--accent);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  display: block;
+  text-align: center;
+}
+
+/* ── SURPRISE / REWARD TILE BADGES ── */
+.tile-special-badge {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 900;
+  font-size: clamp(5px, 0.65vw, 8px);
+  line-height: 1;
+  border-radius: 2px;
+  padding: 0 2px;
+  pointer-events: none;
+  z-index: 3;
+  letter-spacing: 0;
+}
+.tile-badge-s {
+  color: #fff;
+  background: rgba(201,168,76,0.85);
+}
+.tile-badge-r {
+  color: #fff;
+  background: rgba(46,204,113,0.85);
 }
