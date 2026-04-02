@@ -635,3 +635,14 @@
   color: #fff;
   background: rgba(46,204,113,0.85);
 }
+
+/* ── TOKEN HOP PULSE ── */
+@keyframes token-hop {
+  0%   { filter: brightness(1);    }
+  40%  { filter: brightness(1.6);  }
+  100% { filter: brightness(1);    }
+}
+
+.token-hop {
+  animation: token-hop 0.1s ease-out;
+}

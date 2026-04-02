@@ -25,6 +25,7 @@ const COLOR_MAP = {
 };
 
 const BOARD_PATH_LENGTH = 44;
+const TOKEN_HALF_SIZE   = 13; // half the token element width/height in px
 
 // ── FORMAT TILE NAME ───────────────────────────────────────────────
 function formatTileName(name) {
@@ -86,6 +87,7 @@ socket.on('game_started', (state) => {
   // Seed prevPositions so no animation on first render
   for (const p of state.players) prevPositions[p.id] = p.position;
   renderAll(state);
+  initDynamicBackground();
 });
 
 socket.on('game_updated', (state) => {
@@ -211,6 +213,15 @@ function hideLoading() {
   document.getElementById('gameLayout').style.display = 'flex';
 }
 
+// ── DYNAMIC BACKGROUND ─────────────────────────────────────────────
+function initDynamicBackground() {
+  if (!document.querySelector('.bg-spotlight')) {
+    const spotlight = document.createElement('div');
+    spotlight.className = 'bg-spotlight';
+    document.body.insertBefore(spotlight, document.body.firstChild);
+  }
+}
+
 // ── ANIMATION ──────────────────────────────────────────────────────
 function animateAndRender(state) {
   // Find players that moved (non-bankrupt, known previous position, different new position)
@@ -246,28 +257,26 @@ function animateAndRender(state) {
   }
   const maxSteps = Math.max(...movedPlayers.map(p => paths[p.id].length));
 
-  // Render board WITHOUT tokens first, then place tokens at start positions
   animating = true;
   renderBoardNoTokens(state);
 
-  // Place starting tokens
+  // Static tokens for non-moving players
+  for (const p of state.players) {
+    if (!p.bankrupt && !movedPlayers.find(m => m.id === p.id)) {
+      const tok = createTokenEl(p);
+      placeTokenOnTile(tok, p.position, false);
+    }
+  }
+
+  // Animated overlay tokens for moving players — placed at their START position
   const tokenEls = {};
   for (const p of movedPlayers) {
     const tok = createTokenEl(p);
     tokenEls[p.id] = tok;
-    placeTokenOnTile(tok, prevPositions[p.id]);
-  }
-  // Also place non-moving players' tokens immediately
-  for (const p of state.players) {
-    if (!p.bankrupt && !movedPlayers.find(m => m.id === p.id)) {
-      const tok = createTokenEl(p);
-      placeTokenOnTile(tok, p.position);
-    }
+    placeTokenOnTile(tok, prevPositions[p.id], true);
   }
 
   let step = 0;
-  const tempPositions = {};
-  for (const p of movedPlayers) tempPositions[p.id] = prevPositions[p.id];
 
   const interval = setInterval(() => {
     if (step >= maxSteps) {
@@ -287,9 +296,14 @@ function animateAndRender(state) {
       const pathSteps = paths[p.id];
       if (step < pathSteps.length) {
         const nextTile = pathSteps[step];
-        tempPositions[p.id] = nextTile;
         const tok = tokenEls[p.id];
-        if (tok) placeTokenOnTile(tok, nextTile);
+        if (tok) {
+          placeTokenOnTile(tok, nextTile, true);
+          // Brief glow pulse per hop
+          tok.classList.remove('token-hop');
+          void tok.offsetWidth; // force reflow so removing/re-adding the class restarts the animation
+          tok.classList.add('token-hop');
+        }
       }
     }
     step++;
@@ -306,18 +320,53 @@ function createTokenEl(player) {
   return tok;
 }
 
-function placeTokenOnTile(tokenEl, tileId) {
+function getTileCenter(tileId) {
   const boardEl = document.getElementById('board');
-  if (!boardEl) return;
+  if (!boardEl) return null;
   const tileEl = boardEl.querySelector(`[data-tileId="${tileId}"]`);
-  if (!tileEl) return;
-  let tc = tileEl.querySelector('.tokens-container');
-  if (!tc) {
-    tc = document.createElement('div');
-    tc.className = 'tokens-container';
-    tileEl.appendChild(tc);
+  if (!tileEl) return null;
+  const boardRect = boardEl.getBoundingClientRect();
+  const tileRect  = tileEl.getBoundingClientRect();
+  return {
+    x: tileRect.left - boardRect.left + tileRect.width  / 2,
+    y: tileRect.top  - boardRect.top  + tileRect.height / 2
+  };
+}
+
+function placeTokenOnTile(tokenEl, tileId, animate) {
+  if (animate) {
+    const pos = getTileCenter(tileId);
+    if (!pos) return;
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    if (tokenEl.parentElement !== boardEl) {
+      boardEl.appendChild(tokenEl);
+    }
+    tokenEl.style.position      = 'absolute';
+    tokenEl.style.left          = '0';
+    tokenEl.style.top           = '0';
+    tokenEl.style.transform     = `translate(${pos.x - TOKEN_HALF_SIZE}px, ${pos.y - TOKEN_HALF_SIZE}px)`;
+    tokenEl.style.zIndex        = '20';
+    tokenEl.style.pointerEvents = 'none';
+  } else {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    const tileEl = boardEl.querySelector(`[data-tileId="${tileId}"]`);
+    if (!tileEl) return;
+    let tc = tileEl.querySelector('.tokens-container');
+    if (!tc) {
+      tc = document.createElement('div');
+      tc.className = 'tokens-container';
+      tileEl.appendChild(tc);
+    }
+    tokenEl.style.position      = '';
+    tokenEl.style.left          = '';
+    tokenEl.style.top           = '';
+    tokenEl.style.transform     = '';
+    tokenEl.style.zIndex        = '';
+    tokenEl.style.pointerEvents = '';
+    tc.appendChild(tokenEl);
   }
-  tc.appendChild(tokenEl);
 }
 
 function updatePrevPositions(state) {
