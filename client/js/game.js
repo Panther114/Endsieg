@@ -10,10 +10,8 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
-// ── ANIMATION STATE ─────────────────────────────────────────────────
-let prevPositions  = {};  // playerId -> tileId before last move
-let animating      = false;
-let pendingRender  = null;
+// ── ANIMATION STATE (REMOVED) ───────────────────────────────────────
+// Animation removed - players now teleport instantly to tiles
 
 // Color map for board property groups
 const COLOR_MAP = {
@@ -23,21 +21,6 @@ const COLOR_MAP = {
   maroon:'#C62828',   coral:'#FF7043',   gold:'#FFD54F',   violet:'#7E57C2',
   indigo:'#5C6BC0',   emerald:'#26A69A', white:'#E0E0E0',  black:'#424242',
 };
-
-const BOARD_PATH_LENGTH = 44;
-const TOKEN_HALF_SIZE   = 13; // half the token element width/height in px
-
-// ── FORMAT TILE NAME ───────────────────────────────────────────────
-function formatTileName(name) {
-  return name.split(' ').map(word => {
-    if (word.length <= 5) return word;
-    const chunks = [];
-    for (let i = 0; i < word.length; i += 5) {
-      chunks.push(word.slice(i, i + 5));
-    }
-    return chunks.join(' ');
-  }).join(' ');
-}
 
 // ── LOADING TIMEOUT ────────────────────────────────────────────────
 const loadingTimeout = setTimeout(() => {
@@ -84,8 +67,6 @@ socket.on('room_updated', () => {
 socket.on('game_started', (state) => {
   gameState = state;
   hideLoading();
-  // Seed prevPositions so no animation on first render
-  for (const p of state.players) prevPositions[p.id] = p.position;
   renderAll(state);
   initDynamicBackground();
 });
@@ -100,11 +81,7 @@ socket.on('game_updated', (state) => {
     updateAuctionDisplay(state);
   }
 
-  if (animating) {
-    pendingRender = state;
-    return;
-  }
-  animateAndRender(state);
+  renderAll(state);
 });
 
 socket.on('chat_message', ({ playerName, message }) => {
@@ -222,207 +199,11 @@ function initDynamicBackground() {
   }
 }
 
-// ── ANIMATION ──────────────────────────────────────────────────────
-function animateAndRender(state) {
-  // Find players that moved (non-bankrupt, known previous position, different new position)
-  const movedPlayers = state.players.filter(p =>
-    !p.bankrupt &&
-    prevPositions[p.id] !== undefined &&
-    prevPositions[p.id] !== p.position
-  );
-
-  if (movedPlayers.length === 0) {
-    renderAll(state);
-    updatePrevPositions(state);
-    if (pendingRender) {
-      const next = pendingRender;
-      pendingRender = null;
-      animateAndRender(next);
-    }
-    return;
-  }
-
-  // Build per-player step paths (wrapping around board)
-  const paths = {};
-  for (const p of movedPlayers) {
-    const from = prevPositions[p.id];
-    const to = p.position;
-    const steps = [];
-    let cur = from;
-    while (cur !== to) {
-      cur = (cur + 1) % BOARD_PATH_LENGTH;
-      steps.push(cur);
-    }
-    paths[p.id] = steps;
-  }
-  const maxSteps = Math.max(...movedPlayers.map(p => paths[p.id].length));
-
-  animating = true;
-  renderBoardNoTokens(state);
-
-  // Static tokens for non-moving players
-  for (const p of state.players) {
-    if (!p.bankrupt && !movedPlayers.find(m => m.id === p.id)) {
-      const tok = createTokenEl(p);
-      placeTokenOnTile(tok, p.position, false);
-    }
-  }
-
-  // Animated overlay tokens for moving players — placed at their START position.
-  // The initial transform is committed with a forced reflow so the browser has a
-  // valid "from" state before the first CSS transition hop fires.
-  const tokenEls = {};
-  for (const p of movedPlayers) {
-    const tok = createTokenEl(p);
-    tokenEls[p.id] = tok;
-    placeTokenOnTile(tok, prevPositions[p.id], true);
-  }
-
-  // Force reflow to commit all initial positions before starting animation
-  const boardEl = document.getElementById('board');
-  if (boardEl) void boardEl.offsetHeight;
-
-  let step = 0;
-
-  // Wait one frame so the browser paints all starting positions before the first hop.
-  requestAnimationFrame(() => {
-  const interval = setInterval(() => {
-    if (step >= maxSteps) {
-      clearInterval(interval);
-      animating = false;
-      renderAll(state);
-      updatePrevPositions(state);
-      if (pendingRender) {
-        const next = pendingRender;
-        pendingRender = null;
-        animateAndRender(next);
-      }
-      return;
-    }
-
-    for (const p of movedPlayers) {
-      const pathSteps = paths[p.id];
-      if (step < pathSteps.length) {
-        const nextTile = pathSteps[step];
-        const tok = tokenEls[p.id];
-        if (tok) {
-          placeTokenOnTile(tok, nextTile, true);
-          // Brief glow pulse per hop
-          tok.classList.remove('token-hop');
-          void tok.offsetWidth; // force reflow so removing/re-adding the class restarts the animation
-          tok.classList.add('token-hop');
-        }
-      }
-    }
-    step++;
-  }, 380);
-  }); // end requestAnimationFrame
-}
-
-function createTokenEl(player) {
-  const tok = document.createElement('div');
-  tok.className = 'player-token anim-token';
-  tok.style.background = player.color;
-  tok.title = player.name;
-  tok.textContent = player.name.charAt(0).toUpperCase();
-  tok.dataset.playerId = player.id;
-  return tok;
-}
-
-function getTileCenter(tileId) {
-  const boardEl = document.getElementById('board');
-  if (!boardEl) return null;
-  const tileEl = boardEl.querySelector(`[data-tileId="${tileId}"]`);
-  if (!tileEl) return null;
-  const boardRect = boardEl.getBoundingClientRect();
-  const tileRect  = tileEl.getBoundingClientRect();
-  return {
-    x: tileRect.left - boardRect.left + tileRect.width  / 2,
-    y: tileRect.top  - boardRect.top  + tileRect.height / 2
-  };
-}
-
-function placeTokenOnTile(tokenEl, tileId, animate) {
-  if (animate) {
-    const pos = getTileCenter(tileId);
-    if (!pos) return;
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
-    if (tokenEl.parentElement !== boardEl) {
-      // Temporarily disable transition for initial placement
-      tokenEl.style.transition = 'none';
-      boardEl.appendChild(tokenEl);
-      // Commit starting position immediately (no transition from nothing)
-      tokenEl.style.position      = 'absolute';
-      tokenEl.style.left          = '0';
-      tokenEl.style.top           = '0';
-      tokenEl.style.transform     = `translate(${pos.x - TOKEN_HALF_SIZE}px, ${pos.y - TOKEN_HALF_SIZE}px)`;
-      tokenEl.style.zIndex        = '20';
-      tokenEl.style.pointerEvents = 'none';
-      // Force the browser to flush layout so the starting transform is committed
-      // before any CSS transition can run.
-      void tokenEl.offsetWidth;
-      // Re-enable transition for subsequent moves
-      tokenEl.style.transition = '';
-      return;
-    }
-    tokenEl.style.position      = 'absolute';
-    tokenEl.style.left          = '0';
-    tokenEl.style.top           = '0';
-    tokenEl.style.transform     = `translate(${pos.x - TOKEN_HALF_SIZE}px, ${pos.y - TOKEN_HALF_SIZE}px)`;
-    tokenEl.style.zIndex        = '20';
-    tokenEl.style.pointerEvents = 'none';
-  } else {
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
-    const tileEl = boardEl.querySelector(`[data-tileId="${tileId}"]`);
-    if (!tileEl) return;
-    let tc = tileEl.querySelector('.tokens-container');
-    if (!tc) {
-      tc = document.createElement('div');
-      tc.className = 'tokens-container';
-      tileEl.appendChild(tc);
-    }
-    tokenEl.style.position      = '';
-    tokenEl.style.left          = '';
-    tokenEl.style.top           = '';
-    tokenEl.style.transform     = '';
-    tokenEl.style.zIndex        = '';
-    tokenEl.style.pointerEvents = '';
-    tc.appendChild(tokenEl);
-  }
-}
-
-function updatePrevPositions(state) {
-  for (const p of state.players) {
-    prevPositions[p.id] = p.position;
-  }
-}
-
 // ── RENDER ALL ─────────────────────────────────────────────────────
 function renderAll(state) {
   renderBoard(state);
   renderPlayers(state);
   renderLog(state.log);
-}
-
-// ── RENDER BOARD (no tokens) ───────────────────────────────────────
-function renderBoardNoTokens(state) {
-  const boardEl = document.getElementById('board');
-  boardEl.innerHTML = '';
-
-  const board = state.board || [];
-  const myPlayer = state.players.find(p => p.id === myId);
-
-  board.forEach(tile => {
-    const [row, col] = TILE_POSITIONS[tile.id] || [1, 1];
-    const el = buildTileEl(tile, row, col, state, myPlayer, false);
-    boardEl.appendChild(el);
-  });
-
-  // Center actions
-  const center = buildCenterEl(state);
-  boardEl.appendChild(center);
 }
 
 // ── RENDER BOARD ───────────────────────────────────────────────────
@@ -435,7 +216,7 @@ function renderBoard(state) {
 
   board.forEach(tile => {
     const [row, col] = TILE_POSITIONS[tile.id] || [1, 1];
-    const el = buildTileEl(tile, row, col, state, myPlayer, true);
+    const el = buildTileEl(tile, row, col, state, myPlayer);
     boardEl.appendChild(el);
   });
 
@@ -443,7 +224,7 @@ function renderBoard(state) {
   boardEl.appendChild(center);
 }
 
-function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
+function buildTileEl(tile, row, col, state, myPlayer) {
   const el = document.createElement('div');
   el.className = buildTileClass(tile, row, col);
   el.dataset.tileId = tile.id;
@@ -553,22 +334,20 @@ function buildTileEl(tile, row, col, state, myPlayer, withTokens) {
     el.prepend(pool);
   }
 
-  // Player tokens
-  if (withTokens) {
-    const tokensHere = state.players.filter(p => p.position === tile.id && !p.bankrupt);
-    if (tokensHere.length) {
-      const tc = document.createElement('div');
-      tc.className = 'tokens-container';
-      tokensHere.forEach(p => {
-        const tok = document.createElement('div');
-        tok.className = 'player-token';
-        tok.style.background = p.color;
-        tok.title = p.name;
-        tok.textContent = p.name.charAt(0).toUpperCase();
-        tc.appendChild(tok);
-      });
-      el.appendChild(tc);
-    }
+  // Player tokens - always render
+  const tokensHere = state.players.filter(p => p.position === tile.id && !p.bankrupt);
+  if (tokensHere.length) {
+    const tc = document.createElement('div');
+    tc.className = 'tokens-container';
+    tokensHere.forEach(p => {
+      const tok = document.createElement('div');
+      tok.className = 'player-token';
+      tok.style.background = p.color;
+      tok.title = p.name;
+      tok.textContent = p.name.charAt(0).toUpperCase();
+      tc.appendChild(tok);
+    });
+    el.appendChild(tc);
   }
 
   // Highlight current player's tile
