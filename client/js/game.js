@@ -278,6 +278,10 @@ function animateAndRender(state) {
     placeTokenOnTile(tok, prevPositions[p.id], true);
   }
 
+  // Force reflow to commit all initial positions before starting animation
+  const boardEl = document.getElementById('board');
+  if (boardEl) void boardEl.offsetHeight;
+
   let step = 0;
 
   // Wait one frame so the browser paints all starting positions before the first hop.
@@ -345,6 +349,8 @@ function placeTokenOnTile(tokenEl, tileId, animate) {
     const boardEl = document.getElementById('board');
     if (!boardEl) return;
     if (tokenEl.parentElement !== boardEl) {
+      // Temporarily disable transition for initial placement
+      tokenEl.style.transition = 'none';
       boardEl.appendChild(tokenEl);
       // Commit starting position immediately (no transition from nothing)
       tokenEl.style.position      = 'absolute';
@@ -356,6 +362,8 @@ function placeTokenOnTile(tokenEl, tileId, animate) {
       // Force the browser to flush layout so the starting transform is committed
       // before any CSS transition can run.
       void tokenEl.offsetWidth;
+      // Re-enable transition for subsequent moves
+      tokenEl.style.transition = '';
       return;
     }
     tokenEl.style.position      = 'absolute';
