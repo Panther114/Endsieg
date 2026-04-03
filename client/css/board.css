@@ -302,11 +302,54 @@
 .tile-railroad   { background: linear-gradient(135deg, #111519, #0e1217); }
 .tile-utility    { background: linear-gradient(135deg, #0f1318, #0c1016); }
 
-/* ── HOUSE / HOTEL ICONS ON COLOR BAND ── */
+/* ── HOUSE / HOTEL ICONS (positioned away from color band) ── */
+.houses-container {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Position houses away from color bar for each tile side */
+.tile-bottom .houses-container {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: 2px;
+}
+
+.tile-top .houses-container {
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-top: 2px;
+}
+
+.tile-left .houses-container {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: column;
+  padding-left: 2px;
+}
+
+.tile-right .houses-container {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-direction: column;
+  padding-right: 2px;
+}
+
 .house-icon, .hotel-icon {
-  font-size: clamp(7px, 0.75vw, 11px);
+  font-size: clamp(8px, 0.85vw, 13px);
   line-height: 1;
   display: block;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
 }
 
 /* ── PLAYER TOKENS ── */
