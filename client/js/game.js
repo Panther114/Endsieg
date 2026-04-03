@@ -274,9 +274,10 @@ function buildTileEl(tile, row, col, state, myPlayer) {
   if (ownerId) {
     const owner = state.players.find(p => p.id === ownerId);
     if (owner) {
-      el.style.outline = `5px solid ${owner.color}`;
-      el.style.outlineOffset = '-3px';
-      el.style.boxShadow = `0 0 18px 5px ${owner.color}CC, 0 0 6px 2px ${owner.color}, inset 0 0 12px 3px ${owner.color}55`;
+      // Add background color below color band instead of glow
+      el.style.background = `linear-gradient(${owner.color}22, ${owner.color}11)`;
+      el.style.outline = `2px solid ${owner.color}`;
+      el.style.outlineOffset = '-2px';
     }
   }
 
