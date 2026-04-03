@@ -682,8 +682,8 @@ function makeCenterBtn(label, type, fn) {
   return btn;
 }
 
-const BOARD_ROWS = 10;
-const BOARD_COLS = 14;
+const BOARD_ROWS = 12;
+const BOARD_COLS = 12;
 
 function buildTileClass(tile, row, col) {
   let cls = `tile tile-${tile.type}`;
