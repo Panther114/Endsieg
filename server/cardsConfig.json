@@ -18,23 +18,25 @@
     }
   },
   "chanceCards": [
-    { "text": "Advance to GO. Collect $200.",        "action": "advance_to",       "target": 0   },
-    { "text": "Go to Jail. Go directly to Jail.",    "action": "go_to_jail"                      },
-    { "text": "Bank pays you dividend of $50.",      "action": "collect",          "amount": 50  },
-    { "text": "Pay poor tax of $15.",                "action": "pay",              "amount": 15  },
+    { "text": "Advance to GO.",                      "action": "advance_to",       "target": 0   },
+    { "text": "Black Male Suspect, Shots Fired!",    "action": "go_to_jail"                      },
+    { "text": "Inherited $69 from your mother.",     "action": "collect",          "amount": 69  },
+    { "text": "Tax for being gay. Pay 125",          "action": "pay",             "amount": 125  },
+    { "text": "Speed ticket. Pay $15 Charge.",       "action": "pay",              "amount": 15  },
+    { "text": "You experienced US healthcare. Pay $400.",       "action": "pay",              "amount": 400 },
+    { "text": "You are an American taxpayer and Trump launched Operation epic fury. Pay $300 for the war effort.",       "action": "pay",              "amount": 300  },
     { "text": "Go back 3 spaces.",                   "action": "move_back",        "amount": 3   },
-    { "text": "Advance to nearest Railroad.",        "action": "nearest_railroad"                },
-    { "text": "Get Out of Jail Free.",               "action": "jail_free"                       },
-    { "text": "Pay each player $50.",                "action": "pay_each",         "amount": 50  }
+    { "text": "Go back 7 spaces.",                   "action": "move_back",        "amount": 7   },
+    { "text": "Advance to nearest SHSID Building.",  "action": "nearest_railroad"                },
+    { "text": "Pay each player $91 for 91Premium.",  "action": "pay_each",         "amount": 91  }
   ],
   "chestCards": [
-    { "text": "Bank error in your favor. Collect $200.", "action": "collect",      "amount": 200 },
-    { "text": "Doctor's fee. Pay $50.",                  "action": "pay",          "amount": 50  },
-    { "text": "Pay school tax of $150.",                 "action": "pay",          "amount": 150 },
+    { "text": "You picked up $20 from the floor.",      "action": "collect",      "amount": 20 },
+    { "text": "Your mom's life insurance of $99.",       "action": "collect",      "amount": 99  },
+    { "text": "Your stock went up. Earned $69",          "action": "collect",       "amount": 69 },
     { "text": "Receive holiday fund maturity. Collect $100.", "action": "collect", "amount": 100 },
-    { "text": "Go to Jail.",                             "action": "go_to_jail"                  },
-    { "text": "Collect $10 from every player.",          "action": "collect_each", "amount": 10  },
-    { "text": "Income tax refund. Collect $20.",         "action": "collect",      "amount": 20  },
-    { "text": "Life insurance matures. Collect $100.",   "action": "collect",      "amount": 100 }
+    { "text": "Your mom's funeral. Collect $25 from every player.",   "action": "collect_each", "amount": 25  },
+    { "text": "Income tax refund. Collect $20.",         "action": "collect",      "amount": 20  }
+  ]"text": "Life insurance matures. Collect $100.",   "action": "collect",      "amount": 100 }
   ]
 }
