@@ -213,7 +213,7 @@ class GameRoom {
     }
 
     const prevPos = player.position;
-    player.position = (player.position + roll) % BOARD.length;
+    player.position = (player.position + roll) % this.board.length;
 
     if (player.position < prevPos) {
       player.money += 200;
@@ -344,16 +344,16 @@ class GameRoom {
         this.sendToJail(player);
         break;
       case 'move_back': {
-        player.position = (player.position - card.amount + BOARD.length) % BOARD.length;
+        player.position = (player.position - card.amount + this.board.length) % this.board.length;
         this.handleTile(player, this.board[player.position]);
         break;
       }
       case 'nearest_railroad': {
-        const railroads = BOARD.filter(t => t.type === 'railroad').map(t => t.id);
+        const railroads = this.board.filter(t => t.type === 'railroad').map(t => t.id);
         let nearest = railroads[0];
-        let minDist = BOARD.length;
+        let minDist = this.board.length;
         for (const r of railroads) {
-          const dist = (r - player.position + BOARD.length) % BOARD.length;
+          const dist = (r - player.position + this.board.length) % this.board.length;
           if (dist < minDist) { minDist = dist; nearest = r; }
         }
         if (nearest < player.position && minDist !== 0) {
@@ -418,16 +418,16 @@ class GameRoom {
 
   _ownsFullGroup(ownerId, group) {
     if (group === undefined || group === null) return false;
-    const groupTiles = BOARD.filter(t => t.group === group && t.type === 'property');
+    const groupTiles = this.board.filter(t => t.group === group && t.type === 'property');
     return groupTiles.length > 0 && groupTiles.every(t => this.propertyOwners[t.id] === ownerId);
   }
 
   _countOwnedInGroup(ownerId, type) {
-    return BOARD.filter(t => t.type === type && this.propertyOwners[t.id] === ownerId).length;
+    return this.board.filter(t => t.type === type && this.propertyOwners[t.id] === ownerId).length;
   }
 
   _countRailroadsOwned(ownerId) {
-    return BOARD.filter(t => t.type === 'railroad' && this.propertyOwners[t.id] === ownerId).length;
+    return this.board.filter(t => t.type === 'railroad' && this.propertyOwners[t.id] === ownerId).length;
   }
 
   buyProperty(playerId) {
@@ -459,7 +459,7 @@ class GameRoom {
     }
 
     // Cannot build while any tile in group is mortgaged
-    const groupTiles = BOARD.filter(t => t.group === tile.group && t.type === 'property');
+    const groupTiles = this.board.filter(t => t.group === tile.group && t.type === 'property');
     if (groupTiles.some(t => this.mortgaged[t.id])) {
       this._addLog(`Cannot build while a tile in this group is mortgaged.`, 'info');
       return this.getState();
