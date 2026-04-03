@@ -479,6 +479,14 @@ class GameRoom {
   buildHouse(playerId, tileId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return this.getState();
+
+    // Check if it's the player's turn
+    const currentPlayer = this.getCurrentPlayer();
+    if (!currentPlayer || currentPlayer.id !== playerId) {
+      this._addLog(`${player.name} can only build on their turn.`, 'info');
+      return this.getState();
+    }
+
     const tile = this.board[tileId];
     if (!tile || tile.type !== 'property') return this.getState();
     if (this.propertyOwners[tile.id] !== playerId) return this.getState();
@@ -533,6 +541,7 @@ class GameRoom {
       // Player rolled doubles: allow them to roll again
       this.turnPhase = 'roll';
       // Keep _doubleCount to track consecutive doubles
+      this._addLog(`${player.name} rolled doubles and gets another turn!`, 'system');
       return this.getState();
     }
 
@@ -545,6 +554,11 @@ class GameRoom {
       while (this.players[this.currentPlayerIndex].bankrupt && safety < this.players.length) {
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
         safety++;
+      }
+      // Log the turn change to make it clearer
+      const nextPlayer = this.getCurrentPlayer();
+      if (nextPlayer) {
+        this._addLog(`It's now ${nextPlayer.name}'s turn.`, 'system');
       }
     }
     this.turnPhase = 'roll';

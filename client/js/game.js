@@ -435,29 +435,29 @@ function buildTileEl(tile, row, col, state, myPlayer) {
       band.appendChild(priceInBand);
     }
 
+    el.appendChild(band);
+
+    // Render house icons separately, outside the color band
     const houseCount = (houseOwner && houseOwner.houses && houseOwner.houses[tile.id]) || 0;
     if (houseCount > 0) {
-      band.style.display = 'flex';
-      band.style.flexDirection = 'column';
-      band.style.alignItems = 'center';
-      band.style.justifyContent = 'flex-end';
-      band.style.gap = '1px';
-      band.style.padding = '1px';
+      const housesContainer = document.createElement('div');
+      housesContainer.className = 'houses-container';
+
       if (houseCount === 5) {
         const hotel = document.createElement('span');
         hotel.className = 'hotel-icon';
         hotel.textContent = '🏨';
-        band.appendChild(hotel);
+        housesContainer.appendChild(hotel);
       } else {
         for (let h = 0; h < houseCount; h++) {
           const house = document.createElement('span');
           house.className = 'house-icon';
           house.textContent = '🏠';
-          band.appendChild(house);
+          housesContainer.appendChild(house);
         }
       }
+      el.appendChild(housesContainer);
     }
-    el.appendChild(band);
   }
 
   // Owner outline — property/railroad/utility
@@ -771,6 +771,7 @@ function showTileInfo(tileId) {
     body.innerHTML = html;
 
     // Build button (only for owner with monopoly, if not mortgaged)
+    const isMyTurn = gameState.currentPlayerId === myId;
     if (myPlayer && ownerId === myId && !isMortgaged) {
       const groupTiles = gameState.board.filter(b => b.group === tile.group && b.type === 'property');
       const hasMonopoly = groupTiles.every(b => gameState.propertyOwners && gameState.propertyOwners[b.id] === myId);
@@ -792,10 +793,24 @@ function showTileInfo(tileId) {
             buildBtn.style.marginTop = '8px';
             buildBtn.style.width = '100%';
             buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
-            buildBtn.onclick = () => {
-              socket.emit('build_house', { roomId, tileId });
-              document.getElementById('tileInfoModal').style.display = 'none';
-            };
+
+            // Disable if not player's turn or insufficient funds
+            if (!isMyTurn || myPlayer.money < cost) {
+              buildBtn.disabled = true;
+              buildBtn.className = 'btn btn-secondary';
+              buildBtn.style.opacity = '0.5';
+              buildBtn.style.cursor = 'not-allowed';
+              if (!isMyTurn) {
+                buildBtn.title = 'Can only build on your turn';
+              } else {
+                buildBtn.title = 'Insufficient funds';
+              }
+            } else {
+              buildBtn.onclick = () => {
+                socket.emit('build_house', { roomId, tileId });
+                document.getElementById('tileInfoModal').style.display = 'none';
+              };
+            }
             body.appendChild(buildBtn);
           }
         } else if (canBuild) {
@@ -805,10 +820,24 @@ function showTileInfo(tileId) {
           buildBtn.style.marginTop = '8px';
           buildBtn.style.width = '100%';
           buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
-          buildBtn.onclick = () => {
-            socket.emit('build_house', { roomId, tileId });
-            document.getElementById('tileInfoModal').style.display = 'none';
-          };
+
+          // Disable if not player's turn or insufficient funds
+          if (!isMyTurn || myPlayer.money < cost) {
+            buildBtn.disabled = true;
+            buildBtn.className = 'btn btn-secondary';
+            buildBtn.style.opacity = '0.5';
+            buildBtn.style.cursor = 'not-allowed';
+            if (!isMyTurn) {
+              buildBtn.title = 'Can only build on your turn';
+            } else {
+              buildBtn.title = 'Insufficient funds';
+            }
+          } else {
+            buildBtn.onclick = () => {
+              socket.emit('build_house', { roomId, tileId });
+              document.getElementById('tileInfoModal').style.display = 'none';
+            };
+          }
           body.appendChild(buildBtn);
         }
       }
