@@ -1,5 +1,5 @@
 {
-  "_comment": "Configurable Chance and Community Chest card decks for Endsieg. Edit freely — changes take effect on the next server restart. Remove or add entries as needed. The full set of supported actions is listed in _schema.",
+  "_comment": "Configurable Chance and Community Chest card decks for Last Stand. Edit freely — changes take effect on the next server restart. Remove or add entries as needed. The full set of supported actions is listed in _schema.",
   "_schema": {
     "text":   "Message displayed in the event log when the card is drawn.",
     "action": "Card effect: 'collect' | 'pay' | 'advance_to' | 'go_to_jail' | 'move_back' | 'nearest_railroad' | 'jail_free' | 'pay_each' | 'collect_each'",

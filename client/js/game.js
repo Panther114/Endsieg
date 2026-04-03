@@ -58,7 +58,7 @@ socket.on('connect', () => {
     window.location.href = '/';
     return;
   }
-  const playerName = sessionStorage.getItem('endsieg_playerName') || '';
+  const playerName = sessionStorage.getItem('laststand_playerName') || '';
   socket.emit('request_game_state', { roomId, playerName });
 });
 
@@ -207,7 +207,7 @@ function calculateTilePath(start, end) {
 
 
 socket.on('player_left', ({ playerName }) => {
-  const myName = sessionStorage.getItem('endsieg_playerName') || '';
+  const myName = sessionStorage.getItem('laststand_playerName') || '';
   if (playerName !== myName) {
     showToast(`${playerName} has left the game.`);
   }
@@ -587,7 +587,7 @@ function updateBoardCenter(state, centerEl) {
 
   const title = document.createElement('div');
   title.className = 'center-title';
-  title.textContent = 'ENDSIEG';
+  title.textContent = 'LAST STAND';
   el.appendChild(title);
 
   const sub = document.createElement('div');

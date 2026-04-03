@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Visual Map Editor for Endsieg Monopoly Game
+Visual Map Editor for Last Stand Monopoly Game
 A standalone offline tool to edit boardConfig.json files
 
 Requirements: tkinter (usually pre-installed with Python)
@@ -24,7 +24,7 @@ COLOR_GROUPS = ['brown', 'cyan', 'pink', 'orange', 'red', 'yellow', 'green', 'da
 class MapEditor:
     def __init__(self, root, initial_file=None):
         self.root = root
-        self.root.title("Endsieg Map Editor")
+        self.root.title("Last Stand Map Editor")
         self.root.geometry("1200x800")
 
         self.current_file = initial_file
