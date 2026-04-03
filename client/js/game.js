@@ -43,14 +43,10 @@ const loadingTimeout = setTimeout(() => {
 // ── BOARD LAYOUT ───────────────────────────────────────────────────
 function buildPositionMap() {
   const pos = {};
-  // Top row (row 1): ids 0-10, col 1->12
-  for (let i = 0; i <= 10; i++) pos[i] = [1, i + 1];
-  // Right column (col 12): ids 11-19, row 2->10
-  for (let i = 11; i <= 19; i++) pos[i] = [i - 9, 12];
-  // Bottom row (row 12): ids 20-30, col 12->1
-  for (let i = 20; i <= 30; i++) pos[i] = [12, 32 - i];
-  // Left column (col 1): ids 31-39, row 11->2
-  for (let i = 31; i <= 39; i++) pos[i] = [41 - i, 1];
+  for (let i = 0; i <= 13; i++) pos[i] = [1, i + 1];
+  for (let i = 14; i <= 21; i++) pos[i] = [i - 12, 14];
+  for (let i = 22; i <= 35; i++) pos[i] = [10, 36 - i];
+  for (let i = 36; i <= 43; i++) pos[i] = [45 - i, 1];
   return pos;
 }
 const TILE_POSITIONS = buildPositionMap();
@@ -188,15 +184,15 @@ function calculateTilePath(start, end) {
   const path = [start];
   let current = start;
 
-  // Board has 40 tiles (0-39), moving clockwise
-  const totalTiles = 40;
+  // Board has 44 tiles (0-43), moving clockwise
+  const totalTiles = 44;
 
   // Calculate distance (always move forward/clockwise)
   let distance;
   if (end >= current) {
     distance = end - current;
   } else {
-    // Wrap around (e.g., from tile 35 to tile 5)
+    // Wrap around (e.g., from tile 40 to tile 5)
     distance = (totalTiles - current) + end;
   }
 
@@ -682,8 +678,8 @@ function makeCenterBtn(label, type, fn) {
   return btn;
 }
 
-const BOARD_ROWS = 12;
-const BOARD_COLS = 12;
+const BOARD_ROWS = 10;
+const BOARD_COLS = 14;
 
 function buildTileClass(tile, row, col) {
   let cls = `tile tile-${tile.type}`;
