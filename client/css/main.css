@@ -46,18 +46,11 @@ html, body {
   color: var(--text-primary);
   overflow-x: hidden;
   position: relative;
-  animation: bg-drift 20s ease-in-out infinite;
 }
 
-@keyframes bg-drift {
-  0%   { filter: brightness(1)    hue-rotate(0deg);   }
-  25%  { filter: brightness(1.12) hue-rotate(8deg);   }
-  50%  { filter: brightness(1.06) hue-rotate(-6deg);  }
-  75%  { filter: brightness(1.15) hue-rotate(12deg);  }
-  100% { filter: brightness(1)    hue-rotate(0deg);   }
-}
+/* Removed bg-drift animation for performance */
 
-/* ── Layer 1: aurora blobs ── */
+/* ── Layer 1: aurora blobs - static for performance ── */
 body::before {
   content: '';
   position: fixed;
@@ -69,11 +62,9 @@ body::before {
     radial-gradient(ellipse 40% 60% at 70% 55%, rgba(255,80,0,0.08) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
-  animation: body-aurora 14s ease-in-out infinite alternate;
-  will-change: transform, opacity;
 }
 
-/* ── Layer 2: fine diagonal grid shimmer ── */
+/* ── Layer 2: fine diagonal grid shimmer - static for performance ── */
 body::after {
   content: '';
   position: fixed;
@@ -85,21 +76,9 @@ body::after {
   pointer-events: none;
   z-index: 0;
   opacity: 0.6;
-  animation: grid-drift 30s linear infinite;
-  will-change: background-position;
 }
 
-@keyframes body-aurora {
-  0%   { opacity: 0.6;  transform: scale(1)    rotate(0deg);    }
-  33%  { opacity: 1.0;  transform: scale(1.04) rotate(0.5deg);  }
-  66%  { opacity: 0.75; transform: scale(0.97) rotate(-0.3deg); }
-  100% { opacity: 1.0;  transform: scale(1.02) rotate(0.2deg);  }
-}
-
-@keyframes grid-drift {
-  0%   { background-position: 0 0; }
-  100% { background-position: 48px 48px; }
-}
+/* Removed body-aurora and grid-drift animations for performance */
 
 /* ── STARS BACKGROUND ── */
 .stars {
@@ -410,10 +389,9 @@ body.game-page {
     radial-gradient(ellipse 110% 60% at 5% 30%,  rgba(10,30,100,0.85) 0%, transparent 50%),
     radial-gradient(ellipse 90%  90% at 95% 70%,  rgba(50,5,100,0.7)   0%, transparent 50%),
     linear-gradient(170deg, #05080f 0%, #080c1a 40%, #04060e 70%, #070b16 100%);
-  animation: bg-drift 20s ease-in-out infinite;
 }
 
-/* ── BACKGROUND SPOTLIGHT (injected by JS on game page) ── */
+/* ── BACKGROUND SPOTLIGHT (injected by JS on game page) - static for performance ── */
 .bg-spotlight {
   position: fixed;
   inset: 0;
@@ -422,16 +400,9 @@ body.game-page {
   background:
     radial-gradient(ellipse 55% 40% at 50% 50%, rgba(100, 60, 220, 0.15) 0%, transparent 70%),
     radial-gradient(ellipse 40% 55% at 30% 60%, rgba(0, 140, 255, 0.12) 0%, transparent 65%);
-  animation: spotlight-drift 18s ease-in-out infinite alternate;
-  will-change: transform;
 }
 
-@keyframes spotlight-drift {
-  0%   { transform: translate(0,    0)    scale(1);    }
-  33%  { transform: translate(8%,  -5%)   scale(1.08); }
-  66%  { transform: translate(-6%,  7%)   scale(0.96); }
-  100% { transform: translate(4%,  -3%)   scale(1.04); }
-}
+/* Removed spotlight-drift animation for performance */
 
 /* ── PANELS (game page) ── */
 .game-layout {
@@ -586,7 +557,7 @@ body.game-page {
 .log-entry {
   color: var(--text-dim);
   padding: 3px 0 3px 8px;
-  font-size: clamp(9px, 1vw, 11px);
+  font-size: clamp(10px, 1.1vw, 13px);
   line-height: 1.3;
   border-bottom: 1px solid rgba(201,168,76,0.04);
   border-left: 2px solid transparent;
