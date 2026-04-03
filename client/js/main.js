@@ -10,6 +10,7 @@ let myPlayerName = '';
 let isHost       = false;
 let roomState    = null;
 let selectedColor = '#7C4DFF'; // default to first color
+let customMapData = null; // stores uploaded custom map JSON
 
 // ── COLOR PICKER ─────────────────────────────────────────────────────
 
@@ -146,8 +147,65 @@ function startGame() {
     mortgage:          document.getElementById('rule-mortgage')?.checked ?? true,
     evenBuild:         document.getElementById('rule-evenBuild')?.checked ?? true
   };
-  socket.emit('start_game', { roomId: myRoomId, startingFunds, rules });
+  socket.emit('start_game', { roomId: myRoomId, startingFunds, rules, customMap: customMapData });
 }
+
+// ── CUSTOM MAP UPLOAD ────────────────────────────────────────────────
+function handleMapUpload(event) {
+  const file = event.target.files[0];
+  const statusEl = document.getElementById('mapUploadStatus');
+
+  if (!file) {
+    customMapData = null;
+    statusEl.textContent = '';
+    return;
+  }
+
+  if (!file.name.endsWith('.json')) {
+    statusEl.textContent = '❌ Please upload a JSON file';
+    statusEl.style.color = '#f87171';
+    customMapData = null;
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+
+      // Validate basic structure
+      if (!data.tiles || !Array.isArray(data.tiles)) {
+        throw new Error('Invalid map structure: missing tiles array');
+      }
+
+      // Basic validation of tile structure
+      const requiredTileFields = ['id', 'type', 'name'];
+      for (const tile of data.tiles) {
+        for (const field of requiredTileFields) {
+          if (tile[field] === undefined) {
+            throw new Error(`Tile ${tile.id || '?'} missing required field: ${field}`);
+          }
+        }
+      }
+
+      customMapData = data;
+      statusEl.textContent = `✓ Loaded: ${file.name} (${data.tiles.length} tiles)`;
+      statusEl.style.color = '#4ade80';
+    } catch (err) {
+      statusEl.textContent = `❌ Error: ${err.message}`;
+      statusEl.style.color = '#f87171';
+      customMapData = null;
+    }
+  };
+  reader.onerror = function() {
+    statusEl.textContent = '❌ Failed to read file';
+    statusEl.style.color = '#f87171';
+    customMapData = null;
+  };
+  reader.readAsText(file);
+}
+
+window.handleMapUpload = handleMapUpload;
 
 // Expose to HTML onclick
 window.createRoom = createRoom;

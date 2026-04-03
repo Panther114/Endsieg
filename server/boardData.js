@@ -84,36 +84,55 @@ const configMap = {};
 // Tile types that can be purchased and have price/rent fields
 const PURCHASABLE_TYPES = ['property', 'railroad', 'utility'];
 
-BOARD.forEach(tile => {
-  const cfg = configMap[tile.id];
-  if (cfg) {
-    const origType = tile.type;
-    if (cfg.name   !== undefined) tile.name   = cfg.name;
-    if (cfg.price  !== undefined) tile.price  = cfg.price;
-    if (cfg.type   !== undefined) tile.type   = cfg.type;
-    if (cfg.color  !== undefined) tile.color  = cfg.color;
-    if (cfg.group  !== undefined) tile.group  = cfg.group;
-    if (cfg.rent   !== undefined) tile.rent   = cfg.rent;
-    if (cfg.cost   !== undefined) tile.cost   = cfg.cost;
-    if (cfg.reward !== undefined) tile.reward = cfg.reward;
+function applyConfig(board, config) {
+  const configMap = {};
+  (config.tiles || []).forEach(t => { configMap[t.id] = t; });
 
-    // When the type changes, clear fields that belong exclusively to the
-    // original type and were not explicitly re-specified in the config.
-    if (cfg.type !== undefined && cfg.type !== origType) {
-      if (!PURCHASABLE_TYPES.includes(tile.type)) {
-        if (cfg.price  === undefined) delete tile.price;
-        if (cfg.color  === undefined) delete tile.color;
-        if (cfg.group  === undefined) delete tile.group;
-        if (cfg.rent   === undefined) delete tile.rent;
-      }
-      if (tile.type !== 'tax' && cfg.cost === undefined) {
-        delete tile.cost;
-      }
-      if (tile.type !== 'go' && cfg.reward === undefined) {
-        delete tile.reward;
+  board.forEach(tile => {
+    const cfg = configMap[tile.id];
+    if (cfg) {
+      const origType = tile.type;
+      if (cfg.name   !== undefined) tile.name   = cfg.name;
+      if (cfg.price  !== undefined) tile.price  = cfg.price;
+      if (cfg.type   !== undefined) tile.type   = cfg.type;
+      if (cfg.color  !== undefined) tile.color  = cfg.color;
+      if (cfg.group  !== undefined) tile.group  = cfg.group;
+      if (cfg.rent   !== undefined) tile.rent   = cfg.rent;
+      if (cfg.cost   !== undefined) tile.cost   = cfg.cost;
+      if (cfg.reward !== undefined) tile.reward = cfg.reward;
+
+      // When the type changes, clear fields that belong exclusively to the
+      // original type and were not explicitly re-specified in the config.
+      if (cfg.type !== undefined && cfg.type !== origType) {
+        if (!PURCHASABLE_TYPES.includes(tile.type)) {
+          if (cfg.price  === undefined) delete tile.price;
+          if (cfg.color  === undefined) delete tile.color;
+          if (cfg.group  === undefined) delete tile.group;
+          if (cfg.rent   === undefined) delete tile.rent;
+        }
+        if (tile.type !== 'tax' && cfg.cost === undefined) {
+          delete tile.cost;
+        }
+        if (tile.type !== 'go' && cfg.reward === undefined) {
+          delete tile.reward;
+        }
       }
     }
+  });
+}
+
+// Apply default config
+applyConfig(BOARD, boardConfig);
+
+// Export function to create board with custom config
+function getBoardWithCustomConfig(customConfig) {
+  // Deep clone the default board
+  const board = JSON.parse(JSON.stringify(BOARD));
+  if (customConfig && customConfig.tiles) {
+    applyConfig(board, customConfig);
   }
-});
+  return board;
+}
 
 module.exports = BOARD;
+module.exports.getBoardWithCustomConfig = getBoardWithCustomConfig;

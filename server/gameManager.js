@@ -33,6 +33,13 @@ function createRoom(hostId, hostName, hostColor) {
   return room;
 }
 
+function setRoomCustomMap(roomId, customMapData) {
+  const room = rooms.get(roomId);
+  if (room) {
+    room.customMap = customMapData;
+  }
+}
+
 function getRoom(id) {
   return rooms.get(id) || null;
 }
@@ -128,4 +135,4 @@ function removePlayer(socketId, io) {
   return { room: null, leftPlayerName: playerName, gracePending: true };
 }
 
-module.exports = { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer };
+module.exports = { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer, setRoomCustomMap };

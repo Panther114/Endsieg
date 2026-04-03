@@ -134,6 +134,13 @@ function animatePlayerMovements(movingPlayers, state) {
     return { player, path, currentStep: 0 };
   });
 
+  // PERFORMANCE FIX: Create shallow copy once instead of deep clone every frame
+  // We only need to modify player positions, not the entire state tree
+  const animState = {
+    ...state,
+    players: state.players.map(p => ({ ...p }))
+  };
+
   // Animate step-by-step
   function animateStep() {
     let allComplete = true;
@@ -145,8 +152,7 @@ function animatePlayerMovements(movingPlayers, state) {
       }
     });
 
-    // Create a temporary state with current animation positions
-    const animState = JSON.parse(JSON.stringify(state));
+    // Update positions in the shallow-copied state
     animations.forEach(anim => {
       const step = Math.min(anim.currentStep, anim.path.length - 1);
       const animPlayer = animState.players.find(p => p.id === anim.player.id);
