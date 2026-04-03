@@ -35,8 +35,8 @@
     { "text": "Your mom's life insurance of $99.",       "action": "collect",      "amount": 99  },
     { "text": "Your stock went up. Earned $69",          "action": "collect",       "amount": 69 },
     { "text": "Receive holiday fund maturity. Collect $100.", "action": "collect", "amount": 100 },
-    { "text": "Your mom's funeral. Collect $25 from every player.",   "action": "collect_each", "amount": 25  },
-    { "text": "Income tax refund. Collect $20.",         "action": "collect",      "amount": 20  }
-  ]"text": "Life insurance matures. Collect $100.",   "action": "collect",      "amount": 100 }
-  ]
+    { "text": "Your mom's funeral. Collect $25 from every player.",   "action": "collect_each", "amount": 25},
+    { "text": "Income tax refund. Collect $20.",         "action": "collect",      "amount": 20  },
+    {"text": "Life insurance matures. Collect $100.",   "action": "collect",      "amount": 100 }
+  ],
 }
