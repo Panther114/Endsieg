@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer } = require('./gameManager');
+const { createRoom, getRoom, addSocketToRoom, removeSocketMapping, removePlayer, cancelGraceTimer, setRoomCustomMap } = require('./gameManager');
 const { PLAYER_COLORS } = require('./gameLogic');
 
 const app = express();
@@ -69,7 +69,7 @@ io.on('connection', (socket) => {
     io.to(roomId.toUpperCase()).emit('room_updated', room.getState());
   });
 
-  socket.on('start_game', ({ roomId, startingFunds, rules }) => {
+  socket.on('start_game', ({ roomId, startingFunds, rules, customMap }) => {
     const room = getRoom(roomId);
     if (!room) return socket.emit('error', { message: 'Room not found.' });
     if (room.hostId !== socket.id) return socket.emit('error', { message: 'Only host can start.' });
@@ -83,6 +83,22 @@ io.on('connection', (socket) => {
       sanitisedRules = {};
       for (const key of allowed) {
         if (typeof rules[key] === 'boolean') sanitisedRules[key] = rules[key];
+      }
+    }
+    // Validate and sanitise custom map if provided
+    if (customMap && typeof customMap === 'object' && Array.isArray(customMap.tiles)) {
+      try {
+        // Validate custom map structure
+        const tiles = customMap.tiles;
+        for (const tile of tiles) {
+          if (typeof tile.id !== 'number' || typeof tile.type !== 'string' || typeof tile.name !== 'string') {
+            throw new Error('Invalid tile structure');
+          }
+        }
+        setRoomCustomMap(roomId, customMap);
+      } catch (err) {
+        console.warn('[start_game] Invalid custom map:', err.message);
+        // Continue without custom map
       }
     }
     room.start(funds, sanitisedRules);

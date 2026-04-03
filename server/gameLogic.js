@@ -2,6 +2,7 @@
 
 const fs   = require('fs');
 const path = require('path');
+const { getBoardWithCustomConfig } = require('./boardData');
 const BOARD = require('./boardData');
 
 const PLAYER_COLORS = [
@@ -96,6 +97,8 @@ class GameRoom {
     this.pendingTrades = {};
     this._jailFreeChance = null;
     this._jailFreeChest = null;
+    this.customMap = null;  // Custom map data for this room
+    this.board = null;      // Actual board data to use (will be set on start)
 
     // ── RICHUP RULES ──────────────────────────────────────────────
     this.rules = {
@@ -145,6 +148,15 @@ class GameRoom {
     this.turnPhase = 'roll';
     this.chanceCards = shuffle(CHANCE_CARDS);
     this.chestCards = shuffle(CHEST_CARDS);
+
+    // Initialize board with custom map if provided
+    if (this.customMap && this.customMap.tiles) {
+      this.board = getBoardWithCustomConfig(this.customMap);
+      console.log(`[GameRoom ${this.id}] Using custom map with ${this.board.length} tiles`);
+    } else {
+      this.board = BOARD;
+    }
+
     if (typeof funds === 'number' && funds >= 500 && funds <= 10000) {
       for (const p of this.players) p.money = funds;
     }
@@ -208,7 +220,7 @@ class GameRoom {
       this._addLog(`${player.name} passed GO and collected $200!`, 'system');
     }
 
-    const tile = BOARD[player.position];
+    const tile = this.board[player.position];
 
     this.handleTile(player, tile);
     // Only update phase if the player didn't go bankrupt during handleTile.
@@ -325,7 +337,7 @@ class GameRoom {
           this._addLog(`${player.name} passed GO — collects $200!`, 'system');
         }
         player.position = dest;
-        this.handleTile(player, BOARD[dest]);
+        this.handleTile(player, this.board[dest]);
         break;
       }
       case 'go_to_jail':
@@ -333,7 +345,7 @@ class GameRoom {
         break;
       case 'move_back': {
         player.position = (player.position - card.amount + BOARD.length) % BOARD.length;
-        this.handleTile(player, BOARD[player.position]);
+        this.handleTile(player, this.board[player.position]);
         break;
       }
       case 'nearest_railroad': {
@@ -349,7 +361,7 @@ class GameRoom {
           this._addLog(`${player.name} passed GO — collects $200!`, 'system');
         }
         player.position = nearest;
-        this.handleTile(player, BOARD[nearest]);
+        this.handleTile(player, this.board[nearest]);
         break;
       }
       case 'jail_free':
@@ -421,7 +433,7 @@ class GameRoom {
   buyProperty(playerId) {
     const player = this.getCurrentPlayer();
     if (!player || player.id !== playerId) return this.getState();
-    const tile = BOARD[player.position];
+    const tile = this.board[player.position];
     if (!['property', 'railroad', 'utility'].includes(tile.type)) return this.getState();
     if (this.propertyOwners[tile.id]) return this.getState();
     if (player.money < tile.price) {
@@ -438,7 +450,7 @@ class GameRoom {
   buildHouse(playerId, tileId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return this.getState();
-    const tile = BOARD[tileId];
+    const tile = this.board[tileId];
     if (!tile || tile.type !== 'property') return this.getState();
     if (this.propertyOwners[tile.id] !== playerId) return this.getState();
     if (!this._ownsFullGroup(playerId, tile.group)) {
@@ -581,7 +593,7 @@ class GameRoom {
   mortgageProperty(playerId, tileId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return this.getState();
-    const tile = BOARD[tileId];
+    const tile = this.board[tileId];
     if (!tile || !['property', 'railroad', 'utility'].includes(tile.type)) return this.getState();
     if (this.propertyOwners[tileId] !== playerId) return this.getState();
     if (this.mortgaged[tileId]) return this.getState();
@@ -600,7 +612,7 @@ class GameRoom {
   unmortgageProperty(playerId, tileId) {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return this.getState();
-    const tile = BOARD[tileId];
+    const tile = this.board[tileId];
     if (!tile) return this.getState();
     if (this.propertyOwners[tileId] !== playerId) return this.getState();
     if (!this.mortgaged[tileId]) return this.getState();
@@ -757,7 +769,7 @@ class GameRoom {
     const player = this.getCurrentPlayer();
     if (!player || player.id !== playerId) return { state: this.getState(), auctionInfo: null };
     if (this.rules.auction) {
-      const tile = BOARD[player.position];
+      const tile = this.board[player.position];
       if (tile && ['property', 'railroad', 'utility'].includes(tile.type) && !this.propertyOwners[tile.id]) {
         const auctionInfo = this.startAuction(tile);
         return { state: this.getState(), auctionInfo };
@@ -889,7 +901,7 @@ class GameRoom {
       lastRoll: this.lastRoll ? this.lastRoll.slice() : null,
       log: this.log.slice(-20),
       winner: this.winner ? { id: this.winner.id, name: this.winner.name } : null,
-      board: BOARD,
+      board: this.board || BOARD,
       rules: Object.assign({}, this.rules),
       freeParkingPool: this.freeParkingPool,
       mortgaged: Object.assign({}, this.mortgaged),
