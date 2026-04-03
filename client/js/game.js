@@ -531,26 +531,13 @@ function updateBoardCenter(state, centerEl) {
         }
         btnRow.appendChild(makeCenterBtn('⏭ Skip', 'skip', skipBuy));
       } else {
-        // Non-purchasable or already owned — show Build + End Turn
-        const canBuild = myPlayer.properties.some(pid => {
-          const t = state.board && state.board[pid];
-          if (!t || t.type !== 'property') return false;
-          const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
-          return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
-        });
-        if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+        // Non-purchasable or already owned — show End Turn only (Build moved to tile modal)
         btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
       }
     }
 
     if (phase === 'end') {
-      const canBuild = myPlayer.properties.some(pid => {
-        const t = state.board && state.board[pid];
-        if (!t || t.type !== 'property') return false;
-        const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
-        return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
-      });
-      if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+      // Build button removed - player must click on property tiles to build
       btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
     }
 
@@ -674,6 +661,50 @@ function showTileInfo(tileId) {
     });
     html += `</tbody></table>`;
     body.innerHTML = html;
+
+    // Build button (only for owner with monopoly, if not mortgaged)
+    if (myPlayer && ownerId === myId && !isMortgaged) {
+      const groupTiles = gameState.board.filter(b => b.group === tile.group && b.type === 'property');
+      const hasMonopoly = groupTiles.every(b => gameState.propertyOwners && gameState.propertyOwners[b.id] === myId);
+      const groupHasNoMortgages = !groupTiles.some(t => gameState.mortgaged && gameState.mortgaged[t.id]);
+
+      if (hasMonopoly && groupHasNoMortgages) {
+        const currentHouses = (myPlayer.houses && myPlayer.houses[tileId]) || 0;
+        const canBuild = currentHouses < 5;
+
+        // Check even build rule
+        if (canBuild && rules.evenBuild) {
+          const minHouses = Math.min(...groupTiles.map(t => (myPlayer.houses && myPlayer.houses[t.id]) || 0));
+          if (currentHouses > minHouses) {
+            // Can't build here - must build on other properties first
+          } else if (canBuild) {
+            const cost = Math.floor(tile.price / 2);
+            const buildBtn = document.createElement('button');
+            buildBtn.className = 'btn btn-primary';
+            buildBtn.style.marginTop = '8px';
+            buildBtn.style.width = '100%';
+            buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
+            buildBtn.onclick = () => {
+              socket.emit('build_house', { roomId, tileId });
+              document.getElementById('tileInfoModal').style.display = 'none';
+            };
+            body.appendChild(buildBtn);
+          }
+        } else if (canBuild) {
+          const cost = Math.floor(tile.price / 2);
+          const buildBtn = document.createElement('button');
+          buildBtn.className = 'btn btn-primary';
+          buildBtn.style.marginTop = '8px';
+          buildBtn.style.width = '100%';
+          buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
+          buildBtn.onclick = () => {
+            socket.emit('build_house', { roomId, tileId });
+            document.getElementById('tileInfoModal').style.display = 'none';
+          };
+          body.appendChild(buildBtn);
+        }
+      }
+    }
 
     // Mortgage/unmortgage buttons (only for owner, if rules allow)
     if (rules.mortgage && myPlayer && ownerId === myId) {
