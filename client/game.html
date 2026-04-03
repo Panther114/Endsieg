@@ -117,10 +117,13 @@
       <p style="color:var(--text-dim);font-size:0.82rem;">Price: $<span id="auctionTilePrice"></span></p>
       <p style="color:var(--text-light);font-size:0.82rem;">Current highest bid: $<span id="auctionCurrentBid">0</span> by <span id="auctionCurrentBidder">—</span></p>
       <p id="auctionStatus" style="color:var(--accent);font-size:0.78rem;min-height:1.2em;"></p>
-      <input type="number" id="auctionBidInput" min="1" placeholder="Your bid" />
-      <div class="modal-btn-row">
-        <button id="auctionBidBtn" class="btn btn-primary">Bid</button>
-        <button id="auctionPassBtn" class="btn btn-secondary">Pass</button>
+      <div class="modal-btn-row" style="gap:8px;flex-wrap:wrap;">
+        <button id="auctionBid2Btn" class="btn btn-primary" style="flex:1;min-width:70px;">+$2</button>
+        <button id="auctionBid10Btn" class="btn btn-primary" style="flex:1;min-width:70px;">+$10</button>
+        <button id="auctionBid100Btn" class="btn btn-primary" style="flex:1;min-width:70px;">+$100</button>
+      </div>
+      <div class="modal-btn-row" style="margin-top:8px;">
+        <button id="auctionPassBtn" class="btn btn-secondary" style="width:100%;">Pass</button>
       </div>
     </div>
   </div>

@@ -214,7 +214,9 @@ class GameRoom {
     // Only update phase if the player didn't go bankrupt during handleTile.
     // eliminatePlayer() already advances the turn and sets turnPhase = 'roll'.
     if (!player.bankrupt) {
-      this.turnPhase = isDouble ? 'roll' : 'action';
+      // Double roll: player takes action first, THEN can roll again (set phase to 'action')
+      // Regular roll: player takes action and ends turn
+      this.turnPhase = 'action';
     }
 
     return this.getState();
@@ -482,6 +484,18 @@ class GameRoom {
   endTurn(playerId) {
     const player = this.getCurrentPlayer();
     if (!player || player.id !== playerId) return this.getState();
+
+    // Check if player rolled doubles (and hasn't rolled 3 doubles in a row)
+    const hasDoubles = this._doubleCount > 0;
+
+    if (hasDoubles) {
+      // Player rolled doubles: allow them to roll again
+      this.turnPhase = 'roll';
+      // Keep _doubleCount to track consecutive doubles
+      return this.getState();
+    }
+
+    // No doubles: advance to next player
     const activePlayers = this.players.filter(p => !p.bankrupt);
     const activeCount = activePlayers.length;
     if (activeCount > 0) {
@@ -611,6 +625,8 @@ class GameRoom {
       passes:    []
     };
     this.turnPhase = 'auction';
+    // Auto-pass players who can't afford initial bid
+    this._autoPassInsolventBidders();
     return {
       tileId:    tile.id,
       tileName:  tile.name,
@@ -623,10 +639,24 @@ class GameRoom {
     if (!this.auctionState || this.auctionState.tileId !== tileId) return this.getState();
     const player = this.players.find(p => p.id === playerId);
     if (!player || player.bankrupt) return this.getState();
-    if (typeof amount !== 'number' || amount < 1 || amount > player.money) return this.getState();
+
+    // Find current highest bid
+    let currentHighest = 0;
+    for (const [pid, bid] of Object.entries(this.auctionState.bids)) {
+      if (bid > currentHighest) currentHighest = bid;
+    }
+
+    // The new bid must be higher than current highest bid
+    if (typeof amount !== 'number' || amount <= currentHighest || amount > player.money) {
+      return this.getState();
+    }
+
     this.auctionState.bids[playerId] = amount;
     // Remove from passes if they changed their mind
     this.auctionState.passes = this.auctionState.passes.filter(id => id !== playerId);
+
+    // After a new bid, auto-pass players who can't afford to outbid
+    this._autoPassInsolventBidders();
     this._checkAuctionEnd();
     return this.getState();
   }
@@ -642,17 +672,58 @@ class GameRoom {
     return this.getState();
   }
 
+  // Auto-pass players who can't afford minimum increment above current bid
+  _autoPassInsolventBidders() {
+    if (!this.auctionState) return;
+
+    // Find current highest bid
+    let currentHighest = 0;
+    for (const [pid, bid] of Object.entries(this.auctionState.bids)) {
+      if (bid > currentHighest) currentHighest = bid;
+    }
+
+    // Minimum next bid is currentHighest + 1 (or +$2 based on UI)
+    const minNextBid = currentHighest + 2;
+
+    const activePlayers = this.players.filter(p => !p.bankrupt);
+    for (const player of activePlayers) {
+      // Skip if already passed or is highest bidder
+      if (this.auctionState.passes.includes(player.id)) continue;
+      const isHighestBidder = this.auctionState.bids[player.id] === currentHighest;
+      if (isHighestBidder) continue;
+
+      // Auto-pass if can't afford minimum next bid
+      if (player.money < minNextBid) {
+        if (!this.auctionState.passes.includes(player.id)) {
+          this.auctionState.passes.push(player.id);
+          this._addLog(`${player.name} automatically passed (insufficient funds).`, 'system');
+        }
+      }
+    }
+  }
+
   _checkAuctionEnd() {
     if (!this.auctionState) return null;
     const activePlayers = this.players.filter(p => !p.bankrupt);
-    const responded = new Set([
-      ...Object.keys(this.auctionState.bids),
-      ...this.auctionState.passes
-    ]);
-    const allResponded = activePlayers.every(p => responded.has(p.id));
-    if (!allResponded) return null;
 
-    // Find highest bidder
+    // Find current highest bidder
+    let highestBidderId = null;
+    let highestBid = 0;
+    for (const [pid, amount] of Object.entries(this.auctionState.bids)) {
+      if (amount > highestBid) {
+        highestBid = amount;
+        highestBidderId = pid;
+      }
+    }
+
+    // Check if all players except the highest bidder have passed
+    const otherPlayers = activePlayers.filter(p => p.id !== highestBidderId);
+    const allOthersPassed = otherPlayers.every(p => this.auctionState.passes.includes(p.id));
+
+    // Auction ends when all players except highest bidder have passed
+    if (!allOthersPassed) return null;
+
+    // Find highest bidder (recalculate to be safe)
     let winnerId = null;
     let winAmount = 0;
     for (const [pid, amount] of Object.entries(this.auctionState.bids)) {

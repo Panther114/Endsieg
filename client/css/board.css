@@ -1,6 +1,14 @@
 /* =====================================================================
    board.css — Board grid, tiles, tokens, houses for Endsieg
    Dark military-strategy aesthetic with gold accents
+
+   CROSS-BROWSER FONT SIZE FIX:
+   - Edge calculates vw units including scrollbar width
+   - Firefox/Chrome calculate vw units excluding scrollbar width
+   - This causes ~10-15% smaller fonts in Firefox/Chrome
+   - Solution: Increased vw multipliers by ~25% (0.7vw → 0.9vw, etc.)
+   - Added CSS variables for consistent font sizing across browsers
+   - Improved adaptive layout for different resolutions and scales
    ===================================================================== */
 
 /* ── DESIGN TOKENS ── */
@@ -17,9 +25,17 @@
   --glow:       rgba(201, 168, 76, 0.15);
 
   /* Adaptive sizing for PC - scales with viewport */
+  /* Increased vw multipliers to normalize across browsers (Edge includes scrollbar in vw, Firefox/Chrome don't) */
   --corner-size: clamp(60px, 8vw, 100px);
   --tile-band-width: clamp(18%, 22%, 25%);
-  --base-font-size: clamp(8px, 0.7vw, 11px);
+  --base-font-size: clamp(8px, 0.9vw, 12px);
+
+  /* Font size variables for consistent cross-browser display */
+  --tile-name-size: clamp(7px, 0.9vw, 12px);
+  --tile-price-size: clamp(6px, 0.75vw, 11px);
+  --tile-price-band-size: clamp(6px, 0.7vw, 10px);
+  --corner-icon-size: clamp(20px, 3.2vw, 36px);
+  --corner-label-size: clamp(7px, 0.9vw, 12px);
 }
 
 /* ── BOARD CONTAINER (14 cols x 10 rows, fills wrapper) ── */
@@ -153,7 +169,7 @@
   justify-content: center;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
-  font-size: clamp(5px, 0.55vw, 9px);
+  font-size: var(--tile-price-band-size);
   color: rgba(255,255,255,0.95);
   text-shadow: 0 1px 3px rgba(0,0,0,1);
   pointer-events: none;
@@ -164,7 +180,7 @@
 .tile-name {
   font-family: 'Rajdhani', 'Arial Narrow', sans-serif;
   font-weight: 700;
-  font-size: clamp(6px, 0.7vw, 10px);
+  font-size: var(--tile-name-size);
   line-height: 1.2;
   white-space: normal;
   word-break: break-word;
@@ -180,7 +196,7 @@
 .tile-price {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(5px, 0.6vw, 9px);
+  font-size: var(--tile-price-size);
   color: var(--accent-dim);
   z-index: 1;
 }
@@ -197,7 +213,7 @@
 }
 
 .tile-corner .corner-icon {
-  font-size: clamp(18px, 2.8vw, 32px);
+  font-size: var(--corner-icon-size);
   display: block;
   filter: drop-shadow(0 0 6px var(--accent));
 }
@@ -205,7 +221,7 @@
 .tile-corner .corner-label {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(6px, 0.75vw, 10px);
+  font-size: var(--corner-label-size);
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -261,7 +277,7 @@
 /* Smaller font for narrow left/right tile names to prevent overflow */
 .tile-left .tile-name,
 .tile-right .tile-name {
-  font-size: clamp(7px, 0.75vw, 10px);
+  font-size: clamp(8px, 0.9vw, 12px);
   line-height: 1.2;
   word-break: break-word;
   text-align: center;
@@ -288,7 +304,7 @@
 
 /* ── HOUSE / HOTEL ICONS ON COLOR BAND ── */
 .house-icon, .hotel-icon {
-  font-size: clamp(6px, 0.6vw, 9px);
+  font-size: clamp(7px, 0.75vw, 11px);
   line-height: 1;
   display: block;
 }
@@ -302,18 +318,18 @@
   flex-wrap: wrap;
   gap: 1px;
   z-index: 5;
-  max-width: clamp(50px, 8vw, 80px);
+  max-width: clamp(55px, 9vw, 90px);
 }
 
 .player-token {
-  width: clamp(22px, 2.2vw, 32px);
-  height: clamp(22px, 2.2vw, 32px);
+  width: clamp(24px, 2.5vw, 36px);
+  height: clamp(24px, 2.5vw, 36px);
   border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.95);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(9px, 1vw, 14px);
+  font-size: clamp(10px, 1.2vw, 16px);
   font-weight: 900;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0,0,0,1);
@@ -390,7 +406,7 @@
 /* ── CENTER TITLE ── */
 .center-title {
   font-family: 'Cinzel', serif;
-  font-size: clamp(22px, 3.5vw, 48px);
+  font-size: clamp(24px, 4vw, 52px);
   font-weight: 900;
   color: var(--accent);
   letter-spacing: 0.2em;
@@ -407,7 +423,7 @@
 
 .center-subtitle {
   font-family: 'Rajdhani', sans-serif;
-  font-size: clamp(10px, 1.3vw, 16px);
+  font-size: clamp(11px, 1.5vw, 18px);
   font-weight: 600;
   color: rgba(201,168,76,0.6);
   letter-spacing: 0.35em;
@@ -427,14 +443,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: clamp(32px, 3.5vw, 48px);
-  height: clamp(32px, 3.5vw, 48px);
+  width: clamp(36px, 4vw, 52px);
+  height: clamp(36px, 4vw, 52px);
   background: linear-gradient(145deg, #1e2336, #131826);
   color: var(--accent);
   border: 2px solid rgba(201,168,76,0.7);
   border-radius: 8px;
   font-family: 'Cinzel', serif;
-  font-size: clamp(16px, 1.8vw, 24px);
+  font-size: clamp(18px, 2vw, 28px);
   font-weight: 900;
   box-shadow:
     0 0 12px rgba(201,168,76,0.35),
@@ -458,7 +474,7 @@
 
 /* ── CURRENT PLAYER INFO ── */
 .center-player-info {
-  font-size: clamp(10px, 1.5vw, 13px);
+  font-size: clamp(11px, 1.7vw, 15px);
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--text-light);
   text-align: center;
@@ -468,7 +484,7 @@
 }
 
 .center-player-info strong {
-  font-size: clamp(11px, 1.7vw, 15px);
+  font-size: clamp(12px, 1.9vw, 17px);
   display: block;
   margin-bottom: 2px;
   font-weight: 700;
@@ -488,17 +504,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(5px, 0.6vw, 8px) clamp(9px, 1.1vw, 14px);
+  padding: clamp(6px, 0.7vw, 10px) clamp(10px, 1.3vw, 16px);
   border: none;
   border-radius: 5px;
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
-  font-size: clamp(10px, 1.3vw, 13px);
+  font-size: clamp(11px, 1.5vw, 15px);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.18s ease;
-  min-height: clamp(26px, 3vw, 34px);
+  min-height: clamp(28px, 3.5vw, 38px);
   white-space: nowrap;
   position: relative;
   overflow: hidden;
@@ -565,7 +581,7 @@
   top: 2px;
   left: 0;
   right: 0;
-  font-size: clamp(6px, 0.75vw, 10px);
+  font-size: clamp(7px, 0.9vw, 12px);
   color: var(--accent);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
@@ -584,7 +600,7 @@
   transform: translateX(-50%);
   font-family: 'Rajdhani', sans-serif;
   font-weight: 900;
-  font-size: clamp(6px, 0.75vw, 10px);
+  font-size: clamp(7px, 0.9vw, 12px);
   line-height: 1;
   border-radius: 2px;
   padding: 0 2px;
@@ -599,4 +615,38 @@
 .tile-badge-r {
   color: #fff;
   background: rgba(46,204,113,0.85);
+}
+
+/* ── RESPONSIVE BOARD SCALING ── */
+/* Improve board adaptability across different resolutions */
+@media (min-width: 1920px) {
+  :root {
+    /* Slightly larger fonts on large displays */
+    --tile-name-size: clamp(8px, 0.9vw, 14px);
+    --tile-price-size: clamp(7px, 0.75vw, 13px);
+    --corner-icon-size: clamp(22px, 3.2vw, 40px);
+  }
+}
+
+@media (max-width: 1366px) {
+  :root {
+    /* Ensure minimum readability on smaller displays */
+    --tile-name-size: clamp(8px, 1vw, 12px);
+    --tile-price-size: clamp(7px, 0.85vw, 11px);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    /* Mobile: use larger minimum sizes for touch targets */
+    --tile-name-size: clamp(9px, 2vw, 14px);
+    --tile-price-size: clamp(8px, 1.8vw, 12px);
+    --corner-icon-size: clamp(24px, 5vw, 40px);
+    --corner-label-size: clamp(8px, 1.8vw, 14px);
+  }
+
+  .board {
+    /* Ensure board remains visible on mobile */
+    min-height: 400px;
+  }
 }

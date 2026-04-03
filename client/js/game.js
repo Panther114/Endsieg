@@ -10,8 +10,10 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
-// ── ANIMATION STATE (REMOVED) ───────────────────────────────────────
-// Animation removed - players now teleport instantly to tiles
+// ── ANIMATION STATE ─────────────────────────────────────────────────
+// Track previous positions to detect movement and animate tile-by-tile
+let previousPositions = {}; // playerId -> position
+let isAnimating = false;
 
 // Color map for board property groups
 const COLOR_MAP = {
@@ -66,6 +68,10 @@ socket.on('room_updated', () => {
 
 socket.on('game_started', (state) => {
   gameState = state;
+  // Initialize previous positions
+  state.players.forEach(player => {
+    previousPositions[player.id] = player.position;
+  });
   hideLoading();
   renderAll(state);
   initDynamicBackground();
@@ -81,7 +87,22 @@ socket.on('game_updated', (state) => {
     updateAuctionDisplay(state);
   }
 
-  renderAll(state);
+  // Detect position changes and animate movement
+  const movingPlayers = [];
+  state.players.forEach(player => {
+    const oldPos = previousPositions[player.id];
+    const newPos = player.position;
+    if (oldPos !== undefined && oldPos !== newPos && !player.bankrupt) {
+      movingPlayers.push({ player, oldPos, newPos });
+    }
+    previousPositions[player.id] = newPos;
+  });
+
+  if (movingPlayers.length > 0 && !isAnimating) {
+    animatePlayerMovements(movingPlayers, state);
+  } else {
+    renderAll(state);
+  }
 });
 
 socket.on('chat_message', ({ playerName, message }) => {
@@ -97,6 +118,87 @@ socket.on('trade_proposed', (trade) => {
 socket.on('error', ({ message }) => {
   alert('Error: ' + message);
 });
+
+// ── PLAYER MOVEMENT ANIMATION ──────────────────────────────────────
+/**
+ * Animates player movements tile-by-tile with 0.1s delay per tile
+ * @param {Array} movingPlayers - Array of {player, oldPos, newPos} objects
+ * @param {Object} state - Game state
+ */
+function animatePlayerMovements(movingPlayers, state) {
+  isAnimating = true;
+
+  // Calculate paths for each moving player
+  const animations = movingPlayers.map(({ player, oldPos, newPos }) => {
+    const path = calculateTilePath(oldPos, newPos);
+    return { player, path, currentStep: 0 };
+  });
+
+  // Animate step-by-step
+  function animateStep() {
+    let allComplete = true;
+
+    animations.forEach(anim => {
+      if (anim.currentStep < anim.path.length) {
+        allComplete = false;
+        anim.currentStep++;
+      }
+    });
+
+    // Create a temporary state with current animation positions
+    const animState = JSON.parse(JSON.stringify(state));
+    animations.forEach(anim => {
+      const step = Math.min(anim.currentStep, anim.path.length - 1);
+      const animPlayer = animState.players.find(p => p.id === anim.player.id);
+      if (animPlayer) {
+        animPlayer.position = anim.path[step];
+      }
+    });
+
+    renderAll(animState);
+
+    if (!allComplete) {
+      setTimeout(animateStep, 100); // 0.1s per tile
+    } else {
+      isAnimating = false;
+      renderAll(state); // Final render with actual state
+    }
+  }
+
+  animateStep();
+}
+
+/**
+ * Calculates the path of tiles from start to end position
+ * @param {number} start - Starting tile ID
+ * @param {number} end - Ending tile ID
+ * @returns {Array} Array of tile IDs representing the path
+ */
+function calculateTilePath(start, end) {
+  const path = [start];
+  let current = start;
+
+  // Board has 44 tiles (0-43), moving clockwise
+  const totalTiles = 44;
+
+  // Calculate distance (always move forward/clockwise)
+  let distance;
+  if (end >= current) {
+    distance = end - current;
+  } else {
+    // Wrap around (e.g., from tile 40 to tile 5)
+    distance = (totalTiles - current) + end;
+  }
+
+  // Build path tile-by-tile
+  for (let i = 1; i <= distance; i++) {
+    current = (start + i) % totalTiles;
+    path.push(current);
+  }
+
+  return path;
+}
+
 
 socket.on('player_left', ({ playerName }) => {
   const myName = sessionStorage.getItem('endsieg_playerName') || '';
@@ -118,11 +220,10 @@ socket.on('auction_started', (info) => {
   document.getElementById('auctionTilePrice').textContent = info.tilePrice;
   document.getElementById('auctionCurrentBid').textContent = '0';
   document.getElementById('auctionCurrentBidder').textContent = '—';
-  document.getElementById('auctionStatus').textContent = 'Place your bid or pass.';
-  document.getElementById('auctionBidInput').value = '';
-  document.getElementById('auctionBidBtn').disabled = false;
-  document.getElementById('auctionPassBtn').disabled = false;
+  document.getElementById('auctionStatus').textContent = 'Increase bid or pass.';
   document.getElementById('auctionModal').style.display = 'flex';
+  // Enable all buttons initially
+  updateAuctionButtonStates();
 });
 
 socket.on('auction_ended', ({ tileName, winner }) => {
@@ -136,28 +237,27 @@ socket.on('auction_ended', ({ tileName, winner }) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Auction bid
-  const auctionBidBtn = document.getElementById('auctionBidBtn');
-  if (auctionBidBtn) {
-    auctionBidBtn.addEventListener('click', () => {
-      const amount = parseInt(document.getElementById('auctionBidInput').value);
-      if (!amount || amount < 1) {
-        document.getElementById('auctionStatus').textContent = 'Enter a valid bid amount.';
-        return;
-      }
-      socket.emit('place_bid', { roomId, tileId: _currentAuctionTileId, amount });
-      auctionBidBtn.disabled = true;
-      document.getElementById('auctionPassBtn').disabled = true;
-      document.getElementById('auctionStatus').textContent = 'Bid placed. Waiting for others…';
-    });
+  // Auction bid increment buttons
+  const auctionBid2Btn = document.getElementById('auctionBid2Btn');
+  const auctionBid10Btn = document.getElementById('auctionBid10Btn');
+  const auctionBid100Btn = document.getElementById('auctionBid100Btn');
+
+  if (auctionBid2Btn) {
+    auctionBid2Btn.addEventListener('click', () => placeBidIncrement(2));
   }
+  if (auctionBid10Btn) {
+    auctionBid10Btn.addEventListener('click', () => placeBidIncrement(10));
+  }
+  if (auctionBid100Btn) {
+    auctionBid100Btn.addEventListener('click', () => placeBidIncrement(100));
+  }
+
   const auctionPassBtn = document.getElementById('auctionPassBtn');
   if (auctionPassBtn) {
     auctionPassBtn.addEventListener('click', () => {
       socket.emit('pass_bid', { roomId, tileId: _currentAuctionTileId });
-      auctionPassBtn.disabled = true;
-      document.getElementById('auctionBidBtn').disabled = true;
       document.getElementById('auctionStatus').textContent = 'Passed. Waiting for others…';
+      disableAllAuctionButtons();
     });
   }
 
@@ -168,6 +268,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+function placeBidIncrement(increment) {
+  if (!gameState || !gameState.auctionState) return;
+
+  const bids = gameState.auctionState.bids || {};
+  let currentHighest = 0;
+  for (const amount of Object.values(bids)) {
+    if (amount > currentHighest) currentHighest = amount;
+  }
+
+  const newBid = currentHighest + increment;
+  const myPlayer = gameState.players.find(p => p.id === myId);
+
+  if (!myPlayer || newBid > myPlayer.money) {
+    document.getElementById('auctionStatus').textContent = 'Insufficient funds!';
+    return;
+  }
+
+  socket.emit('place_bid', { roomId, tileId: _currentAuctionTileId, amount: newBid });
+  document.getElementById('auctionStatus').textContent = `Bid $${newBid}. Waiting for others…`;
+}
+
+function disableAllAuctionButtons() {
+  document.getElementById('auctionBid2Btn').disabled = true;
+  document.getElementById('auctionBid10Btn').disabled = true;
+  document.getElementById('auctionBid100Btn').disabled = true;
+  document.getElementById('auctionPassBtn').disabled = true;
+}
+
+function updateAuctionButtonStates() {
+  if (!gameState || !gameState.auctionState) return;
+
+  const bids = gameState.auctionState.bids || {};
+  const passes = gameState.auctionState.passes || [];
+  const myPlayer = gameState.players.find(p => p.id === myId);
+
+  if (!myPlayer) return;
+
+  // Check if player has passed
+  if (passes.includes(myId)) {
+    disableAllAuctionButtons();
+    document.getElementById('auctionStatus').textContent = 'You have passed.';
+    return;
+  }
+
+  // Find current highest bid
+  let currentHighest = 0;
+  let highestBidderId = null;
+  for (const [pid, amount] of Object.entries(bids)) {
+    if (amount > currentHighest) {
+      currentHighest = amount;
+      highestBidderId = pid;
+    }
+  }
+
+  // Check if player is highest bidder
+  const isHighestBidder = highestBidderId === myId;
+  if (isHighestBidder) {
+    disableAllAuctionButtons();
+    document.getElementById('auctionPassBtn').disabled = false;
+    document.getElementById('auctionStatus').textContent = 'You have the highest bid! Wait or pass.';
+    return;
+  }
+
+  // Enable/disable buttons based on affordability
+  const bid2Btn = document.getElementById('auctionBid2Btn');
+  const bid10Btn = document.getElementById('auctionBid10Btn');
+  const bid100Btn = document.getElementById('auctionBid100Btn');
+  const passBtn = document.getElementById('auctionPassBtn');
+
+  bid2Btn.disabled = (currentHighest + 2 > myPlayer.money);
+  bid10Btn.disabled = (currentHighest + 10 > myPlayer.money);
+  bid100Btn.disabled = (currentHighest + 100 > myPlayer.money);
+  passBtn.disabled = false;
+
+  // Update button opacity for visual feedback
+  bid2Btn.style.opacity = bid2Btn.disabled ? '0.4' : '1';
+  bid10Btn.style.opacity = bid10Btn.disabled ? '0.4' : '1';
+  bid100Btn.style.opacity = bid100Btn.disabled ? '0.4' : '1';
+
+  document.getElementById('auctionStatus').textContent = 'Increase bid or pass.';
+}
 
 function updateAuctionDisplay(state) {
   if (!state.auctionState) return;
@@ -180,6 +362,9 @@ function updateAuctionDisplay(state) {
   document.getElementById('auctionCurrentBid').textContent = highestBid;
   const bidder = highestBidderId ? state.players.find(p => p.id === highestBidderId) : null;
   document.getElementById('auctionCurrentBidder').textContent = bidder ? bidder.name : '—';
+
+  // Update button states based on current auction state
+  updateAuctionButtonStates();
 }
 
 // ── HIDE LOADING ───────────────────────────────────────────────────
@@ -448,26 +633,13 @@ function updateBoardCenter(state, centerEl) {
         }
         btnRow.appendChild(makeCenterBtn('⏭ Skip', 'skip', skipBuy));
       } else {
-        // Non-purchasable or already owned — show Build + End Turn
-        const canBuild = myPlayer.properties.some(pid => {
-          const t = state.board && state.board[pid];
-          if (!t || t.type !== 'property') return false;
-          const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
-          return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
-        });
-        if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+        // Non-purchasable or already owned — show End Turn only (Build moved to tile modal)
         btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
       }
     }
 
     if (phase === 'end') {
-      const canBuild = myPlayer.properties.some(pid => {
-        const t = state.board && state.board[pid];
-        if (!t || t.type !== 'property') return false;
-        const groupTiles = state.board.filter(b => b.group === t.group && b.type === 'property');
-        return groupTiles.every(b => state.propertyOwners && state.propertyOwners[b.id] === myId);
-      });
-      if (canBuild) btnRow.appendChild(makeCenterBtn('🏠 Build', 'build', openBuildModal));
+      // Build button removed - player must click on property tiles to build
       btnRow.appendChild(makeCenterBtn('✅ End Turn', 'end', endTurn));
     }
 
@@ -591,6 +763,50 @@ function showTileInfo(tileId) {
     });
     html += `</tbody></table>`;
     body.innerHTML = html;
+
+    // Build button (only for owner with monopoly, if not mortgaged)
+    if (myPlayer && ownerId === myId && !isMortgaged) {
+      const groupTiles = gameState.board.filter(b => b.group === tile.group && b.type === 'property');
+      const hasMonopoly = groupTiles.every(b => gameState.propertyOwners && gameState.propertyOwners[b.id] === myId);
+      const groupHasNoMortgages = !groupTiles.some(t => gameState.mortgaged && gameState.mortgaged[t.id]);
+
+      if (hasMonopoly && groupHasNoMortgages) {
+        const currentHouses = (myPlayer.houses && myPlayer.houses[tileId]) || 0;
+        const canBuild = currentHouses < 5;
+
+        // Check even build rule
+        if (canBuild && rules.evenBuild) {
+          const minHouses = Math.min(...groupTiles.map(t => (myPlayer.houses && myPlayer.houses[t.id]) || 0));
+          if (currentHouses > minHouses) {
+            // Can't build here - must build on other properties first
+          } else if (canBuild) {
+            const cost = Math.floor(tile.price / 2);
+            const buildBtn = document.createElement('button');
+            buildBtn.className = 'btn btn-primary';
+            buildBtn.style.marginTop = '8px';
+            buildBtn.style.width = '100%';
+            buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
+            buildBtn.onclick = () => {
+              socket.emit('build_house', { roomId, tileId });
+              document.getElementById('tileInfoModal').style.display = 'none';
+            };
+            body.appendChild(buildBtn);
+          }
+        } else if (canBuild) {
+          const cost = Math.floor(tile.price / 2);
+          const buildBtn = document.createElement('button');
+          buildBtn.className = 'btn btn-primary';
+          buildBtn.style.marginTop = '8px';
+          buildBtn.style.width = '100%';
+          buildBtn.textContent = currentHouses === 4 ? `🏨 Build Hotel ($${cost})` : `🏠 Build House ($${cost})`;
+          buildBtn.onclick = () => {
+            socket.emit('build_house', { roomId, tileId });
+            document.getElementById('tileInfoModal').style.display = 'none';
+          };
+          body.appendChild(buildBtn);
+        }
+      }
+    }
 
     // Mortgage/unmortgage buttons (only for owner, if rules allow)
     if (rules.mortgage && myPlayer && ownerId === myId) {
