@@ -851,16 +851,27 @@ body.game-page {
 .board-wrapper {
   flex: 1;
   display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   background: transparent;
+  /* Ensure board fills height in fullscreen */
+  height: 100%;
 }
 
-/* GPU-composited layers for the board and its center panel */
-.board-wrapper .board { transform: translateZ(0); }
+/* Make board square and fill viewport height in fullscreen mode */
+.board-wrapper .board {
+  transform: translateZ(0);
+  /* Board is square: use height to determine both dimensions */
+  aspect-ratio: 1 / 1;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: 100%;
+}
+
 .board-wrapper .board-center-actions { transform: translateZ(0); }
 
 /* ── SCROLLBARS ── */
