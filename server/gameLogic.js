@@ -407,14 +407,20 @@ class GameRoom {
         const activePlayers = this.players.filter(p => !p.bankrupt && p.id !== player.id);
         const total = card.amount * activePlayers.length;
         player.money += total;
+        // FIX: Collect all payments first, then check bankruptcies to avoid turn desync
+        const bankruptPlayers = [];
         for (const p of activePlayers) {
           p.money -= card.amount;
-          // Check for bankruptcy after each player pays
+          // Collect players who went bankrupt
           if (p.money < 0) {
-            this.eliminatePlayer(p);
+            bankruptPlayers.push(p);
           }
         }
         this._addLog(`${player.name} collected $${card.amount} from each player.`, 'money');
+        // Eliminate all bankrupt players at once to prevent multiple turn advances
+        for (const p of bankruptPlayers) {
+          this.eliminatePlayer(p);
+        }
         break;
       }
     }
@@ -859,6 +865,18 @@ class GameRoom {
     // Clear their kick votes
     delete this.kickVotes[playerId];
 
+    // FIX: Clean up auction state if player was participating
+    if (this.auctionState) {
+      // Remove player's bid
+      if (this.auctionState.bids[playerId]) {
+        delete this.auctionState.bids[playerId];
+      }
+      // Remove player from passes
+      this.auctionState.passes = this.auctionState.passes.filter(id => id !== playerId);
+      // Check if auction should end after player removal
+      this._checkAuctionEnd();
+    }
+
     // Check for winner
     const active = this.players.filter(p => !p.bankrupt);
     if (active.length === 1) {
@@ -895,6 +913,18 @@ class GameRoom {
     player.properties = [];
     player.houses = {};
 
+    // FIX: Clean up auction state if player was participating
+    if (this.auctionState) {
+      // Remove player's bid
+      if (this.auctionState.bids[player.id]) {
+        delete this.auctionState.bids[player.id];
+      }
+      // Remove player from passes
+      this.auctionState.passes = this.auctionState.passes.filter(id => id !== player.id);
+      // Check if auction should end after player removal
+      this._checkAuctionEnd();
+    }
+
     const active = this.players.filter(p => !p.bankrupt);
     if (active.length === 1) {
       this.winner = active[0];
@@ -902,13 +932,19 @@ class GameRoom {
     } else if (active.length === 0) {
       this._addLog('All players are bankrupt — no winner declared.', 'system');
     } else {
-      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-      let safety = 0;
-      while (this.players[this.currentPlayerIndex].bankrupt && safety < this.players.length) {
+      // FIX: Only advance turn if the eliminated player was the current player
+      const currentPlayer = this.players[this.currentPlayerIndex];
+      if (currentPlayer && currentPlayer.id === player.id) {
+        // Current player went bankrupt — advance to next non-bankrupt player
         this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        safety++;
+        let safety = 0;
+        while (this.players[this.currentPlayerIndex].bankrupt && safety < this.players.length) {
+          this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+          safety++;
+        }
+        this.turnPhase = 'roll';
       }
-      this.turnPhase = 'roll';
+      // If a non-current player went bankrupt, don't change turn
     }
   }
 

@@ -106,93 +106,143 @@ io.on('connection', (socket) => {
   });
 
   socket.on('roll_dice', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.rollDice(socket.id);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.rollDice(socket.id);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[roll_dice] Error:', err);
+      socket.emit('error', { message: 'An error occurred while rolling dice.' });
+    }
   });
 
   socket.on('buy_property', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.buyProperty(socket.id);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.buyProperty(socket.id);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[buy_property] Error:', err);
+      socket.emit('error', { message: 'An error occurred while buying property.' });
+    }
   });
 
   socket.on('skip_buy', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const { state, auctionInfo } = room.skipBuy(socket.id);
-    io.to(roomId).emit('game_updated', state);
-    if (auctionInfo) {
-      io.to(roomId).emit('auction_started', auctionInfo);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const { state, auctionInfo } = room.skipBuy(socket.id);
+      io.to(roomId).emit('game_updated', state);
+      if (auctionInfo) {
+        io.to(roomId).emit('auction_started', auctionInfo);
+      }
+    } catch (err) {
+      console.error('[skip_buy] Error:', err);
+      socket.emit('error', { message: 'An error occurred while skipping purchase.' });
     }
   });
 
   socket.on('place_bid', ({ roomId, tileId, amount }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const prevAuction = room.auctionState;
-    const state = room.placeBid(socket.id, tileId, amount);
-    io.to(roomId).emit('game_updated', state);
-    // If auction ended (auctionState cleared), emit auction_ended
-    if (prevAuction && !room.auctionState) {
-      const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
-      io.to(roomId).emit('auction_ended', {
-        tileName: prevAuction.tileName,
-        winner: winnerPlayer ? { name: winnerPlayer.name, amount } : null
-      });
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const prevAuction = room.auctionState;
+      const state = room.placeBid(socket.id, tileId, amount);
+      io.to(roomId).emit('game_updated', state);
+      // If auction ended (auctionState cleared), emit auction_ended
+      if (prevAuction && !room.auctionState) {
+        const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
+        io.to(roomId).emit('auction_ended', {
+          tileName: prevAuction.tileName,
+          winner: winnerPlayer ? { name: winnerPlayer.name, amount } : null
+        });
+      }
+    } catch (err) {
+      console.error('[place_bid] Error:', err);
+      socket.emit('error', { message: 'An error occurred during bidding.' });
     }
   });
 
   socket.on('pass_bid', ({ roomId, tileId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const prevAuction = room.auctionState;
-    const state = room.passBid(socket.id, tileId);
-    io.to(roomId).emit('game_updated', state);
-    if (prevAuction && !room.auctionState) {
-      const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
-      io.to(roomId).emit('auction_ended', {
-        tileName: prevAuction.tileName,
-        winner: winnerPlayer ? { name: winnerPlayer.name } : null
-      });
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const prevAuction = room.auctionState;
+      const state = room.passBid(socket.id, tileId);
+      io.to(roomId).emit('game_updated', state);
+      if (prevAuction && !room.auctionState) {
+        const winnerPlayer = state.players.find(p => p.properties.includes(tileId));
+        io.to(roomId).emit('auction_ended', {
+          tileName: prevAuction.tileName,
+          winner: winnerPlayer ? { name: winnerPlayer.name } : null
+        });
+      }
+    } catch (err) {
+      console.error('[pass_bid] Error:', err);
+      socket.emit('error', { message: 'An error occurred while passing bid.' });
     }
   });
 
   socket.on('build_house', ({ roomId, tileId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.buildHouse(socket.id, tileId);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.buildHouse(socket.id, tileId);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[build_house] Error:', err);
+      socket.emit('error', { message: 'An error occurred while building.' });
+    }
   });
 
   socket.on('end_turn', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.endTurn(socket.id);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.endTurn(socket.id);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[end_turn] Error:', err);
+      socket.emit('error', { message: 'An error occurred while ending turn.' });
+    }
   });
 
   socket.on('pay_jail', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.payJail(socket.id);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.payJail(socket.id);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[pay_jail] Error:', err);
+      socket.emit('error', { message: 'An error occurred while paying jail fee.' });
+    }
   });
 
   socket.on('mortgage_property', ({ roomId, tileId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.mortgageProperty(socket.id, tileId);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.mortgageProperty(socket.id, tileId);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[mortgage_property] Error:', err);
+      socket.emit('error', { message: 'An error occurred while mortgaging property.' });
+    }
   });
 
   socket.on('unmortgage_property', ({ roomId, tileId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.unmortgageProperty(socket.id, tileId);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.unmortgageProperty(socket.id, tileId);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[unmortgage_property] Error:', err);
+      socket.emit('error', { message: 'An error occurred while unmortgaging property.' });
+    }
   });
 
   socket.on('trade_offer', ({ roomId, toId, offer }) => {
@@ -207,46 +257,71 @@ io.on('connection', (socket) => {
   });
 
   socket.on('trade_accept', ({ roomId, fromId, offer }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const state = room.trade(fromId, socket.id, offer);
-    io.to(roomId).emit('game_updated', state);
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const state = room.trade(fromId, socket.id, offer);
+      io.to(roomId).emit('game_updated', state);
+    } catch (err) {
+      console.error('[trade_accept] Error:', err);
+      socket.emit('error', { message: 'An error occurred during trade.' });
+    }
   });
 
   socket.on('vote_kick', ({ roomId, targetId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const result = room.voteKick(socket.id, targetId);
-    if (result && result.kicked) {
-      io.to(roomId).emit('player_kicked', { playerName: result.playerName });
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const result = room.voteKick(socket.id, targetId);
+      if (result && result.kicked) {
+        io.to(roomId).emit('player_kicked', { playerName: result.playerName });
+      }
+      io.to(roomId).emit('game_updated', room.getState());
+    } catch (err) {
+      console.error('[vote_kick] Error:', err);
+      socket.emit('error', { message: 'An error occurred during vote kick.' });
     }
-    io.to(roomId).emit('game_updated', room.getState());
   });
 
   socket.on('undo_vote_kick', ({ roomId, targetId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    room.undoVoteKick(socket.id, targetId);
-    io.to(roomId).emit('game_updated', room.getState());
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      room.undoVoteKick(socket.id, targetId);
+      io.to(roomId).emit('game_updated', room.getState());
+    } catch (err) {
+      console.error('[undo_vote_kick] Error:', err);
+      socket.emit('error', { message: 'An error occurred while undoing vote.' });
+    }
   });
 
   socket.on('declare_bankruptcy', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const player = room.players.find(p => p.id === socket.id);
-    if (!player || player.bankrupt) return;
-    room.eliminatePlayer(player);
-    io.to(roomId).emit('game_updated', room.getState());
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const player = room.players.find(p => p.id === socket.id);
+      if (!player || player.bankrupt) return;
+      room.eliminatePlayer(player);
+      io.to(roomId).emit('game_updated', room.getState());
+    } catch (err) {
+      console.error('[declare_bankruptcy] Error:', err);
+      socket.emit('error', { message: 'An error occurred while declaring bankruptcy.' });
+    }
   });
 
   socket.on('quit_game', ({ roomId }) => {
-    const room = getRoom(roomId);
-    if (!room || !room.started) return;
-    const playerName = room.removePlayerFromGame(socket.id);
-    if (playerName) {
-      io.to(roomId).emit('player_left', { playerName });
+    try {
+      const room = getRoom(roomId);
+      if (!room || !room.started) return;
+      const playerName = room.removePlayerFromGame(socket.id);
+      if (playerName) {
+        io.to(roomId).emit('player_left', { playerName });
+      }
+      io.to(roomId).emit('game_updated', room.getState());
+    } catch (err) {
+      console.error('[quit_game] Error:', err);
+      socket.emit('error', { message: 'An error occurred while quitting game.' });
     }
-    io.to(roomId).emit('game_updated', room.getState());
   });
 
   socket.on('request_game_state', ({ roomId, playerName }) => {
@@ -261,6 +336,16 @@ io.on('connection', (socket) => {
       const existingPlayer = room.players.find(p => p.name.toLowerCase() === name);
       if (existingPlayer) {
         const oldId = existingPlayer.id;
+
+        // FIX: Join socket room FIRST before updating state
+        // This ensures the reconnecting player receives all subsequent events
+        addSocketToRoom(socket.id, roomId.toUpperCase());
+        socket.join(roomId.toUpperCase());
+
+        // Cancel grace timer before state updates to prevent race condition
+        cancelGraceTimer(roomId.toUpperCase(), existingPlayer.name);
+
+        // Update player ID and all references
         existingPlayer.id = socket.id;
         for (const tileId of Object.keys(room.propertyOwners)) {
           if (room.propertyOwners[tileId] === oldId) {
@@ -277,9 +362,7 @@ io.on('connection', (socket) => {
           delete room.kickVotes[oldId];
         }
         removeSocketMapping(oldId);
-        addSocketToRoom(socket.id, roomId.toUpperCase());
-        socket.join(roomId.toUpperCase());
-        cancelGraceTimer(roomId.toUpperCase(), existingPlayer.name);
+
         // Only send current state — no game logic triggered
         socket.emit('game_updated', room.getState());
       } else {

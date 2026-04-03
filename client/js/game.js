@@ -134,12 +134,12 @@ function animatePlayerMovements(movingPlayers, state) {
     return { player, path, currentStep: 0 };
   });
 
-  // PERFORMANCE FIX: Create shallow copy once instead of deep clone every frame
-  // We only need to modify player positions, not the entire state tree
-  const animState = {
-    ...state,
-    players: state.players.map(p => ({ ...p }))
-  };
+  // PERFORMANCE FIX: Track temporary positions separately instead of cloning state
+  // This avoids expensive object spreading on every frame
+  const tempPositions = {};
+  animations.forEach(anim => {
+    tempPositions[anim.player.id] = anim.path[0];
+  });
 
   // Animate step-by-step
   function animateStep() {
@@ -149,17 +149,20 @@ function animatePlayerMovements(movingPlayers, state) {
       if (anim.currentStep < anim.path.length) {
         allComplete = false;
         anim.currentStep++;
+        const step = Math.min(anim.currentStep, anim.path.length - 1);
+        tempPositions[anim.player.id] = anim.path[step];
       }
     });
 
-    // Update positions in the shallow-copied state
-    animations.forEach(anim => {
-      const step = Math.min(anim.currentStep, anim.path.length - 1);
-      const animPlayer = animState.players.find(p => p.id === anim.player.id);
-      if (animPlayer) {
-        animPlayer.position = anim.path[step];
-      }
-    });
+    // Create a minimal state update with only changed positions
+    const animState = {
+      ...state,
+      players: state.players.map(p =>
+        tempPositions[p.id] !== undefined
+          ? { ...p, position: tempPositions[p.id] }
+          : p
+      )
+    };
 
     renderAll(animState);
 
@@ -167,7 +170,9 @@ function animatePlayerMovements(movingPlayers, state) {
       setTimeout(animateStep, 100); // 0.1s per tile
     } else {
       isAnimating = false;
-      renderAll(state); // Final render with actual state
+      // FIX: Use latest global gameState instead of captured state
+      // This ensures we render the most recent state, not the state from when animation started
+      renderAll(gameState); // Final render with latest state
     }
   }
 
