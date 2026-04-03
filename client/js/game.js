@@ -184,8 +184,8 @@ function calculateTilePath(start, end) {
   const path = [start];
   let current = start;
 
-  // Board has 44 tiles (0-43), moving clockwise
-  const totalTiles = 44;
+  // Use dynamic board size from game state
+  const totalTiles = gameState && gameState.board ? gameState.board.length : 44;
 
   // Calculate distance (always move forward/clockwise)
   let distance;
