@@ -170,7 +170,9 @@ function animatePlayerMovements(movingPlayers, state) {
       setTimeout(animateStep, 100); // 0.1s per tile
     } else {
       isAnimating = false;
-      renderAll(state); // Final render with actual state
+      // FIX: Use latest global gameState instead of captured state
+      // This ensures we render the most recent state, not the state from when animation started
+      renderAll(gameState); // Final render with latest state
     }
   }
 
