@@ -1,7 +1,7 @@
 {
-  "name": "endsieg",
+  "name": "last-stand",
   "version": "1.0.0",
-  "description": "Multiplayer Monopoly-style game",
+  "description": "Multiplayer Monopoly-style board game",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",

@@ -191,6 +191,10 @@ class GameRoom {
           player.inJail = false;
           player.jailTurns = 0;
           this._addLog(`${player.name} paid $50 after 3 turns in Jail.`, 'jail');
+          // Check for bankruptcy after forced jail payment
+          if (player.money < 0) {
+            this.eliminatePlayer(player);
+          }
         } else {
           this._addLog(`${player.name} is still in Jail (turn ${player.jailTurns}/3).`, 'jail');
           this.turnPhase = 'end';
@@ -249,6 +253,10 @@ class GameRoom {
         if (this.rules.vacationCash) {
           this.freeParkingPool += cost;
         }
+        // Check for bankruptcy after tax payment
+        if (player.money < 0) {
+          this.eliminatePlayer(player);
+        }
         break;
       }
 
@@ -288,6 +296,10 @@ class GameRoom {
             player.money -= rent;
             owner.money += rent;
             this._addLog(`${player.name} paid $${rent} rent to ${owner.name} for ${tile.name}.`, 'money');
+            // Check for bankruptcy after rent payment
+            if (player.money < 0) {
+              this.eliminatePlayer(player);
+            }
           }
         }
         break;
@@ -328,6 +340,10 @@ class GameRoom {
         if (this.rules.vacationCash) {
           this.freeParkingPool += amount;
         }
+        // Check for bankruptcy after card payment
+        if (player.money < 0) {
+          this.eliminatePlayer(player);
+        }
         break;
       }
       case 'advance_to': {
@@ -350,6 +366,11 @@ class GameRoom {
       }
       case 'nearest_railroad': {
         const railroads = this.board.filter(t => t.type === 'railroad').map(t => t.id);
+        // Check if any railroads exist on the board
+        if (railroads.length === 0) {
+          this._addLog(`${player.name} drew "Advance to nearest Railroad" but no railroads exist!`, 'card');
+          break;
+        }
         let nearest = railroads[0];
         let minDist = this.board.length;
         for (const r of railroads) {
@@ -376,6 +397,10 @@ class GameRoom {
         // so it does NOT go to the free parking pool even when vacationCash is on.
         for (const p of activePlayers) p.money += perPlayer;
         this._addLog(`${player.name} paid $${perPlayer} to each player.`, 'money');
+        // Check for bankruptcy after paying all players
+        if (player.money < 0) {
+          this.eliminatePlayer(player);
+        }
         break;
       }
       case 'collect_each': {
@@ -384,6 +409,10 @@ class GameRoom {
         player.money += total;
         for (const p of activePlayers) {
           p.money -= card.amount;
+          // Check for bankruptcy after each player pays
+          if (p.money < 0) {
+            this.eliminatePlayer(p);
+          }
         }
         this._addLog(`${player.name} collected $${card.amount} from each player.`, 'money');
         break;

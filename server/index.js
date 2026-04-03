@@ -323,5 +323,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Endsieg server running on port ${PORT}`);
+  console.log(`Last Stand server running on port ${PORT}`);
 });

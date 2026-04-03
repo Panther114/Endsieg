@@ -1,6 +1,6 @@
-# Endsieg Map Editor
+# Last Stand Map Editor
 
-A standalone visual editor for creating and modifying Endsieg board configuration files.
+A standalone visual editor for creating and modifying Last Stand board configuration files.
 
 ## Features
 
@@ -35,7 +35,7 @@ If you want to create a standalone .exe file that doesn't require Python:
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --name "Endsieg Map Editor" map_editor.py
+pyinstaller --onefile --windowed --name "Last Stand Map Editor" map_editor.py
 ```
 
 The executable will be created in the `dist/` folder.

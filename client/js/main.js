@@ -121,7 +121,7 @@ function createRoom() {
   const name = document.getElementById('playerName').value.trim();
   if (!name) return showError('Please enter your name.');
   myPlayerName = name;
-  sessionStorage.setItem('endsieg_playerName', name);
+  sessionStorage.setItem('laststand_playerName', name);
   socket.emit('create_room', { playerName: name, color: selectedColor });
 }
 
@@ -131,7 +131,7 @@ function joinRoom() {
   if (!name) return showError('Please enter your name.');
   if (!code || code.length !== 4) return showError('Please enter a valid 4-digit room code.');
   myPlayerName = name;
-  sessionStorage.setItem('endsieg_playerName', name);
+  sessionStorage.setItem('laststand_playerName', name);
   socket.emit('join_room', { roomId: code, playerName: name, color: selectedColor });
 }
 
