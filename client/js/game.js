@@ -10,8 +10,10 @@ let myId       = null;
 let gameState  = null;
 let pendingTrade = null; // incoming trade
 
-// ── ANIMATION STATE (REMOVED) ───────────────────────────────────────
-// Animation removed - players now teleport instantly to tiles
+// ── ANIMATION STATE ─────────────────────────────────────────────────
+// Track previous positions to detect movement and animate tile-by-tile
+let previousPositions = {}; // playerId -> position
+let isAnimating = false;
 
 // Color map for board property groups
 const COLOR_MAP = {
@@ -66,6 +68,10 @@ socket.on('room_updated', () => {
 
 socket.on('game_started', (state) => {
   gameState = state;
+  // Initialize previous positions
+  state.players.forEach(player => {
+    previousPositions[player.id] = player.position;
+  });
   hideLoading();
   renderAll(state);
   initDynamicBackground();
@@ -81,7 +87,22 @@ socket.on('game_updated', (state) => {
     updateAuctionDisplay(state);
   }
 
-  renderAll(state);
+  // Detect position changes and animate movement
+  const movingPlayers = [];
+  state.players.forEach(player => {
+    const oldPos = previousPositions[player.id];
+    const newPos = player.position;
+    if (oldPos !== undefined && oldPos !== newPos && !player.bankrupt) {
+      movingPlayers.push({ player, oldPos, newPos });
+    }
+    previousPositions[player.id] = newPos;
+  });
+
+  if (movingPlayers.length > 0 && !isAnimating) {
+    animatePlayerMovements(movingPlayers, state);
+  } else {
+    renderAll(state);
+  }
 });
 
 socket.on('chat_message', ({ playerName, message }) => {
@@ -97,6 +118,87 @@ socket.on('trade_proposed', (trade) => {
 socket.on('error', ({ message }) => {
   alert('Error: ' + message);
 });
+
+// ── PLAYER MOVEMENT ANIMATION ──────────────────────────────────────
+/**
+ * Animates player movements tile-by-tile with 0.1s delay per tile
+ * @param {Array} movingPlayers - Array of {player, oldPos, newPos} objects
+ * @param {Object} state - Game state
+ */
+function animatePlayerMovements(movingPlayers, state) {
+  isAnimating = true;
+
+  // Calculate paths for each moving player
+  const animations = movingPlayers.map(({ player, oldPos, newPos }) => {
+    const path = calculateTilePath(oldPos, newPos);
+    return { player, path, currentStep: 0 };
+  });
+
+  // Animate step-by-step
+  function animateStep() {
+    let allComplete = true;
+
+    animations.forEach(anim => {
+      if (anim.currentStep < anim.path.length) {
+        allComplete = false;
+        anim.currentStep++;
+      }
+    });
+
+    // Create a temporary state with current animation positions
+    const animState = JSON.parse(JSON.stringify(state));
+    animations.forEach(anim => {
+      const step = Math.min(anim.currentStep, anim.path.length - 1);
+      const animPlayer = animState.players.find(p => p.id === anim.player.id);
+      if (animPlayer) {
+        animPlayer.position = anim.path[step];
+      }
+    });
+
+    renderAll(animState);
+
+    if (!allComplete) {
+      setTimeout(animateStep, 100); // 0.1s per tile
+    } else {
+      isAnimating = false;
+      renderAll(state); // Final render with actual state
+    }
+  }
+
+  animateStep();
+}
+
+/**
+ * Calculates the path of tiles from start to end position
+ * @param {number} start - Starting tile ID
+ * @param {number} end - Ending tile ID
+ * @returns {Array} Array of tile IDs representing the path
+ */
+function calculateTilePath(start, end) {
+  const path = [start];
+  let current = start;
+
+  // Board has 44 tiles (0-43), moving clockwise
+  const totalTiles = 44;
+
+  // Calculate distance (always move forward/clockwise)
+  let distance;
+  if (end >= current) {
+    distance = end - current;
+  } else {
+    // Wrap around (e.g., from tile 40 to tile 5)
+    distance = (totalTiles - current) + end;
+  }
+
+  // Build path tile-by-tile
+  for (let i = 1; i <= distance; i++) {
+    current = (start + i) % totalTiles;
+    path.push(current);
+  }
+
+  return path;
+}
+
 
 socket.on('player_left', ({ playerName }) => {
   const myName = sessionStorage.getItem('endsieg_playerName') || '';
