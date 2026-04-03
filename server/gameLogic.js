@@ -214,7 +214,9 @@ class GameRoom {
     // Only update phase if the player didn't go bankrupt during handleTile.
     // eliminatePlayer() already advances the turn and sets turnPhase = 'roll'.
     if (!player.bankrupt) {
-      this.turnPhase = isDouble ? 'roll' : 'action';
+      // Double roll: player takes action first, THEN can roll again (set phase to 'action')
+      // Regular roll: player takes action and ends turn
+      this.turnPhase = 'action';
     }
 
     return this.getState();
@@ -482,6 +484,18 @@ class GameRoom {
   endTurn(playerId) {
     const player = this.getCurrentPlayer();
     if (!player || player.id !== playerId) return this.getState();
+
+    // Check if player rolled doubles (and hasn't rolled 3 doubles in a row)
+    const hasDoubles = this._doubleCount > 0;
+
+    if (hasDoubles) {
+      // Player rolled doubles: allow them to roll again
+      this.turnPhase = 'roll';
+      // Keep _doubleCount to track consecutive doubles
+      return this.getState();
+    }
+
+    // No doubles: advance to next player
     const activePlayers = this.players.filter(p => !p.bankrupt);
     const activeCount = activePlayers.length;
     if (activeCount > 0) {
